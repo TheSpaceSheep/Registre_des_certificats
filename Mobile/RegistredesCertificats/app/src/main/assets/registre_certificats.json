@@ -1,0 +1,162 @@
+{
+  "certificats": [
+    [
+      "Guitare",
+      "Musique"
+    ],
+    [
+      "Piano",
+      "Musique"
+    ],
+    [
+      "Sortie",
+      "Ext\u00e9rieur"
+    ],
+    [
+      "Grimper aux arbres",
+      "Ext\u00e9rieur"
+    ]
+  ],
+  "membres": [
+    [
+      "Christelle",
+      "Alaux",
+      "Christelle A."
+    ],
+    [
+      "Christelle",
+      "Bergerac",
+      "Christelle B."
+    ],
+    [
+      "Christophe",
+      "Ma\u00e9",
+      "Christophe"
+    ],
+    [
+      "Marion",
+      "Raynal",
+      "Marion"
+    ],
+    [
+      "Pierre",
+      "Grangier",
+      "Pierre"
+    ],
+    [
+      "melissandre-emmanuel",
+      "schmidt",
+      "melissandre-emmanuel"
+    ]
+  ],
+  "registre": {
+    "Christelle A.": [
+      [
+        "Guitare",
+        0
+      ],
+      [
+        "Piano",
+        0
+      ],
+      [
+        "Sortie",
+        0
+      ],
+      [
+        "Grimper aux arbres",
+        0
+      ]
+    ],
+    "Christelle B.": [
+      [
+        "Guitare",
+        0
+      ],
+      [
+        "Piano",
+        0
+      ],
+      [
+        "Sortie",
+        0
+      ],
+      [
+        "Grimper aux arbres",
+        0
+      ]
+    ],
+    "Christophe": [
+      [
+        "Guitare",
+        0
+      ],
+      [
+        "Piano",
+        0
+      ],
+      [
+        "Sortie",
+        0
+      ],
+      [
+        "Grimper aux arbres",
+        0
+      ]
+    ],
+    "Marion": [
+      [
+        "Guitare",
+        0
+      ],
+      [
+        "Piano",
+        0
+      ],
+      [
+        "Sortie",
+        0
+      ],
+      [
+        "Grimper aux arbres",
+        0
+      ]
+    ],
+    "Pierre": [
+      [
+        "Guitare",
+        0
+      ],
+      [
+        "Piano",
+        0
+      ],
+      [
+        "Sortie",
+        0
+      ],
+      [
+        "Grimper aux arbres",
+        0
+      ]
+    ],
+    "melissandre-emmanuel": [
+      [
+        "Guitare",
+        0
+      ],
+      [
+        "Piano",
+        0
+      ],
+      [
+        "Sortie",
+        0
+      ],
+      [
+        "Grimper aux arbres",
+        0
+      ]
+    ]
+  }
+}
