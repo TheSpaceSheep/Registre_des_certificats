@@ -5,6 +5,7 @@ import java.lang.NullPointerException
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.google.gson.annotations.SerializedName
 import com.google.gson.reflect.TypeToken
 import copyJsonDataFromAssetToFilesDir
 import getJsonDataFromFile
@@ -101,12 +102,13 @@ class Registre{
         return l
     }
 
-    fun charger(appctx: Context, file: String = "registre_certificats.json"){
-        copyJsonDataFromAssetToFilesDir(appctx, file)
-        val jsonFileString = getJsonDataFromFile(appctx, file)
-        val gson = GsonBuilder().setPrettyPrinting().create()
+    fun charger(appctx: Context, file: String = "registre_certificats.json", merge: Boolean = false){
+        val jsonFileString = File(filesDir, file).readText()
+        val gson = GsonBuilder().create()
         val jsonRegistreType = object : TypeToken<JSONRegistre>() {}.type
         val jsonRegistre: JSONRegistre = gson.fromJson(jsonFileString, jsonRegistreType)
+
+        if(!merge) clear()
 
         for(m in jsonRegistre.membres){
             ajouterMembre(m[0], m[1], m[2])
@@ -125,7 +127,7 @@ class Registre{
         }
     }
 
-    fun enregistrer(context: Context, file: String = "registre_certificats.json"){
+    fun enregistrer(file: String = "registre_certificats.json"){
         val jsonable: JSONRegistre
         val jcertificats = mutableListOf<List<String>>()
         val jmembres = mutableListOf<List<String>>()
@@ -144,17 +146,27 @@ class Registre{
             }
         }
 
-        jsonable = JSONRegistre(jmembres, jcertificats, jregistre)
+        jsonable = JSONRegistre(jcertificats, jmembres, jregistre)
 
-        val gson = GsonBuilder().setPrettyPrinting().create()
+        val gson = GsonBuilder().create()
         val jsonString: String = gson.toJson(jsonable)
-        val myfile = File(context.filesDir, file)
+        val myfile = File(filesDir, file)
 
         myfile.writeText(jsonString)
-        println(myfile.readText())
+    }
+
+    private fun clear(){
+        membres = mutableListOf() // liste des membres de l'école
+        certificats = mutableListOf() // liste de tous les certificats
+        registre = mutableMapOf() // (membre, certificat) -> statut de certification
+        categories = mutableMapOf() // categorie -> liste des certificats de cette catégorie
     }
 }
 
-class JSONRegistre(val certificats:List<List<String>>,
-                   val membres:List<List<String>>,
-                   val registre:Map<String, List<List<String>>>)
+class JSONRegistre(
+        @SerializedName("certificats")
+        val certificats:List<List<String>>,
+        @SerializedName("membres")
+        val membres:List<List<String>>,
+        @SerializedName("registre")
+        val registre:Map<String, List<List<String>>>)

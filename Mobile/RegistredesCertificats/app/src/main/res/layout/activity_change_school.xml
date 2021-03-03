@@ -59,10 +59,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
-        android:layout_marginBottom="32dp"
+        android:height="70dp"
         android:onClick="validerCallback"
         android:text="Valider"
         android:textSize="18sp" />
-
 
 </LinearLayout>

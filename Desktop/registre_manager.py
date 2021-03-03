@@ -1,8 +1,6 @@
 # coding: utf-8
-import pickle
 import os
 import json
-
 
 class Membre:
     def __init__(self, prenom, nom):
@@ -68,7 +66,7 @@ class Registre:
 
         self.membres.append(m) if m not in self.membres else self.membres
         for c in self.certificats:
-            self.registre[m, c] = 0
+            self.registre[m, c] = Registre.NonCertifie
 
         return m
 
@@ -79,8 +77,9 @@ class Registre:
     def ajouter_certificat(self, nom, categorie):
         c = Certificat(nom, categorie)
         for cert in self.certificats:
-            if cert.nom == c.nom and c.categorie == cert.categorie:
-                return 1
+            # different certificats cannot have the same name 
+            if cert.nom == c.nom:
+                return f"Il existe déjà un certificat nommé {nom} dans la catégorie {cert.categorie}."
 
         self.certificats.append(c)
         if c.categorie in self.categories:
@@ -105,8 +104,12 @@ class Registre:
             duplicates = []
             for n in self.membres:
                 if n.prenom == m.prenom:
+                    n.id = n.prenom
                     duplicates.append(n)
-            unambiguous_id(duplicates)
+
+            if len(duplicates) >= 2:
+                unambiguous_id(duplicates)
+
             return True
         else:
             return False
@@ -141,16 +144,19 @@ class Registre:
            -----------------------
            Bool : a le certificat
            String : message explicatif"""
-        if self.registre[membre, certificat] == 0:
-            return False, f"{membre.prenom} n'a pas le certificat {certificat.nom}"
-        elif self.registre[membre, certificat] == -2:
-            return False, f"{membre.prenom} n'a plus le certificat {certificat.nom}"
-        elif self.registre[membre, certificat] == -1:
-            return True, f"{membre.prenom} est certificateur\xb7rice pour le certificat {certificat.nom}"
-        elif self.registre[membre, certificat] >= 1:
-            return True, f"{membre.prenom} a le certificat {certificat.nom}."
+        a = self.registre[membre, certificat]
+        if a == Registre.NonCertifie:
+            msg = f"{membre.prenom} n'a pas le certificat {certificat.nom}"
+        elif a == Registre.CertificatPerdu:
+            msg = f"{membre.prenom} n'a plus le certificat {certificat.nom}"
+        elif a == Registre.Certificateur:
+            msg = f"{membre.prenom} est certificateur\xb7rice pour le certificat {certificat.nom}"
+        elif a >= Registre.Certifie:
+            msg = f"{membre.prenom} a le certificat {certificat.nom}."
         else:
-            return self.registre[membre, certificat]
+            msg = "Register internal error"
+
+        return a, msg
 
     def find_membre_by_id(self, identification):
         for m in self.membres:
@@ -194,8 +200,9 @@ class Registre:
             json.dump(jsonable, reg_file)
             reg_file.close()
 
-    def charger(self, file="registre_certificats.json"):
+    def charger(self, file="registre_certificats.json", merge=False):
         try:
+            if not merge: self.clear()
             with open(file, "r") as reg_file:
                 reg_cert = json.load(reg_file)
                 for m in reg_cert["membres"]:
@@ -208,20 +215,17 @@ class Registre:
                     m = self.find_membre_by_id(mid)
                     for r in reg_cert["registre"][mid]:
                         c = self.find_certificat_by_name(r[0])
-                        self.decerner_certificat(m, c, r[1])
-
-                # reg_cert = pickle.load(reg_file)
-                # self.membres = reg_cert.membres
-                # self.certificats = reg_cert.certificats
-                # self.registre = reg_cert.registre
-                # self.categories = reg_cert.categories
+                        self.decerner_certificat(m, c, int(r[1]))
         except FileNotFoundError:
             print("file does not exist")
             self = Registre()
 
 
     def clear(self):
-        self = Registre()
+        self.membres = []
+        self.certificats = []
+        self.registre = {}
+        self.categories = {}
 
     def __repr__(self):
         if not (self.membres or self.certificats):
@@ -297,14 +301,4 @@ def unambiguous_id(duplicates):
         # name and same first 13 last name letters.
         if len(n.id) > 15:
             raise ValueError("There are names that are way too long and too similar")
-
-
-
-
-def creer_registre_si_manquant():
-    if not os.path.isfile("registre_certificats.pk"):
-        with open("registre_certificats.pk", "wb") as reg_file:
-            reg_cert = Registre()
-            pickle.dump(reg_cert, reg_file)
-            reg_file.close()
 

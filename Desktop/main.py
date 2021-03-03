@@ -9,147 +9,136 @@ from widgets import *
 from registre_manager import Registre
 import excel
 from settings_window import SettingsWindow
-from multithreading import Uploader
+import multithreading
 import cloud_support
 
 import sys
 
+# TODO: REFACTOOOR
 
-def show_settings(parent, registre):
-    settings_window = SettingsWindow(parent, registre)
-    settings_window.show()
+class MainUsage(QMainWindow):
+    """ Main window of the application, simple and designed
+        to be used by people who award certificates. """
+    def __init__(self):
+        super(MainUsage, self).__init__()
 
-class MainWindow(QMainWindow):
-    def __init__(self, registre=None):
-        super(MainWindow, self).__init__()
-        if registre is None:
-            print("registre is None")
-            return 1
+        # continuously check connection in background
+        self.check_connection_in_thread()
+
+        # trying to load register from local files
+        self.registre = Registre()  # empty register
+        self.school_name = ""
+        if os.path.exists("school_name.txt") and os.path.exists("p.rc"):
+            with open("school_name.txt", "r") as f:
+                self.school_name = f.read()
+            with open("p.rc") as f:
+                p = f.read()
+            # if local files exist, download from cloud
+            if cloud_support.download_registre(self.school_name, p):
+                self.registre = Registre()
+                self.registre.charger()
+
+        if not self.school_name:
+            self.show_settings()
+
         self.registre_updated_flag = False
+        self.thread_running_flag = False
 
+        self.lay_out()
 
+    def lay_out(self):
+        """ lays out main window on initialization
+            and connects button callbacks """
         self.setWindowTitle("Registre des certificats")
-
-
         self.layout = QVBoxLayout()
-
         self.title = QLabel("Registre des certificats")
         self.title.setFont(QFont("unknown", 13))
         self.title.setAlignment(Qt.AlignCenter)
-
         self.param_imprim = QWidget()
         self.h_layout = QHBoxLayout()
         self.h_layout.setContentsMargins(0, 0, 0, 0)
-
         self.parametres = QPushButton("Paramètres")
-        self.parametres.clicked.connect(lambda x: show_settings(self, registre))
         self.imprimer = QPushButton("Imprimer")
-        self.imprimer.clicked.connect(self.imprimer_callback)
-
         self.h_layout.addWidget(self.parametres)
         self.h_layout.addWidget(self.imprimer)
         self.param_imprim.setLayout(self.h_layout)
-
         self.membres = MyComboBox(placeholder="Membre")
         self.membres.setFont(QFont("unknown", 13))
-        self.membres.addItems([m.id for m in registre.membres])
-        self.membres.currentTextChanged.connect(self.update)
-
+        self.membres.addItems([m.id for m in self.registre.membres])
         self.categories = MyComboBox(placeholder="Catégorie")
         self.categories.setFont(QFont("unknown", 13))
-        self.categories.addItems([c for c in registre.categories])
-        self.categories.currentTextChanged.connect(self.update)
-
-        self.cert_boxes = {}
-        for c in registre.categories:
-            self.cert_boxes[c] = MyComboBox(placeholder="Certificat")
-            self.cert_boxes[c].setFont(QFont("unknown", 13))
-            self.cert_boxes[c].addItems([c.nom for c in registre.get_certificats(c)])
-            self.cert_boxes[c].currentTextChanged.connect(self.update)
-
+        self.categories.addItems([c for c in self.registre.categories])
+        self.cert_box = MyComboBox(placeholder="Certificat")
+        self.cert_box.setFont(QFont("unknown", 13))
         self.status = QLabel()
         self.status.setAlignment(Qt.AlignCenter)
         self.status.setWordWrap(True)
         self.status.setFont(QFont("unknown", 12))
-
-
         self.decerner = QPushButton("Décerner certificat")
-
         self.rendre_certificateur = QPushButton("Nouveau Certificateur")
-
         self.thread_progress = QLabel("Enregistré")
         self.thread_progress.setAlignment(Qt.AlignRight)
         self.thread_progress.setStyleSheet("color:grey")
-
-
-        # erase certificate text when theres a new category entry 
-        # (!dirty pythonic trick used, see get() doc)
-        self.categories.currentTextChanged.connect(lambda x: self.cert_boxes.get(\
-            self.categories.currentText(), MyComboBox()).setCurrentIndex(-1))
-
-        self.decerner.clicked.connect(self.decerner_callback)
-        self.rendre_certificateur.clicked.connect(self.rendre_certificateur_callback)
-
-        # organizing widgets
         self.layout.addWidget(self.title)
         self.layout.addWidget(self.param_imprim)
         self.layout.addWidget(self.membres)
         self.layout.addWidget(self.categories)
-
-        for c in registre.categories:
-            self.layout.addWidget(self.cert_boxes[c])
-            self.cert_boxes[c].hide()
-
+        self.layout.addWidget(self.cert_box)
         self.layout.addWidget(self.status)
         self.layout.addWidget(self.decerner)
         self.layout.addWidget(self.rendre_certificateur)
         self.layout.addWidget(self.thread_progress)
-
         self.decerner.hide()
         self.rendre_certificateur.hide()
-
         widget = QWidget()
         widget.setLayout(self.layout)
-
-
-        # Set the central widget of the Window. Widget will expand
-        # to take up all the space in the window by default.
         self.setCentralWidget(widget)
         self.resize(self.layout.sizeHint())
 
-        if os.path.exists("school_name.txt"):
-            with open("school_name.txt", "r") as f:
-                self.school_name = f.read()
-        else:
-            self.school_name = ""
+        # -----------  connecting slots  ---------------
 
-        if self.school_name == "":
-            show_settings(self, registre)
+        self.parametres.clicked.connect(self.show_settings)
+        self.imprimer.clicked.connect(self.imprimer_callback)
+        self.membres.currentTextChanged.connect(self.update)
+        self.categories.currentTextChanged.connect(self.update)
+        self.cert_box.currentTextChanged.connect(self.update)
+        self.decerner.clicked.connect(self.decerner_callback)
+        self.rendre_certificateur.clicked.connect(self.rendre_certificateur_callback)
 
 
     def update(self):
-        print(self.school_name, self.registre_updated_flag)
-        if self.school_name != "" and self.registre_updated_flag:
-            registre.enregistrer()
-            self.upload_in_thread(self.thread_progress)
+        """Frequently called function that updates both register data and UI"""
 
+        # ----------  updating register data ----------
+        if not self.school_name:
+            # first prompt screen if no school name
+            self.show_settings()
+        else:
+            if self.registre_updated_flag:
+                self.upload_in_thread()
+            else:
+                self.download_in_thread()
         self.registre_updated_flag = False
-        self.show_cert_boxes()
+
+        # ---------------  updating UI  ---------------
+        self.update_comboboxes()
+
         membre = self.membres.currentText()
-        certificat = self.cert_boxes.get(self.categories.currentText(), MyComboBox()).currentText()
+        certificat = self.cert_box.currentText()
 
-        m = registre.find_membre_by_id(membre)
-        c = registre.find_certificat_by_name(certificat)
+        m = self.registre.find_membre_by_id(membre)
+        c = self.registre.find_certificat_by_name(certificat)
 
-        if not (m and c):
+        if not m or not c:
             self.status.setText("")
             self.rendre_certificateur.hide()
             self.decerner.hide()
         else:
-            self.status.setText(registre.a_le_certificat(m, c)[1])
+            a, msg = self.registre.a_le_certificat(m, c)
+            self.status.setText(msg)
 
-            a = registre.a_le_certificat(m, c)[0]
             if a == Registre.Certifie:
+                print("Certifié")
                 self.decerner.setText("Retirer certificat")
                 self.decerner.show()
                 self.rendre_certificateur.show()
@@ -167,42 +156,68 @@ class MainWindow(QMainWindow):
 
 
     def update_comboboxes(self):
-        for i in range(self.membres.count()):
-            self.membres.removeItem(0)
+        """ Loads data from self.registre into the members and category
+        widgets """
+        saved_text_m = self.membres.currentText()
+        saved_text_cat = self.categories.currentText()
+        saved_text_cert = self.cert_box.currentText()
 
-        self.membres.addItems([m.id for m in registre.membres])
+        # prevent signals from retriggering self.update
+        self.membres.currentTextChanged.disconnect(self.update)
+        self.categories.currentTextChanged.disconnect(self.update)
+        self.cert_box.currentTextChanged.disconnect(self.update)
 
-        for _ in range(self.categories.count()):
-            self.categories.removeItem(0)
-        for cat in registre.categories:
-            self.categories.addItems([cat])
-            for _ in range(self.cert_boxes[cat].count()):
-                self.cert_boxes[cat].removeItem(0)
+        # deleting possibly obsolete data
+        self.membres.clear()
+        self.categories.clear()
+        self.cert_box.clear()
 
-            self.cert_boxes[cat].addItems([c.nom for c in registre.get_certificats(cat)])
-            self.cert_boxes[cat].hide()
+        # filling in updated data
+        self.membres.addItems([m.id for m in self.registre.membres])
+        self.categories.addItems(self.registre.categories)
+        if saved_text_cat in self.registre.categories:
+            self.cert_box.addItems([c.nom for c in
+                                    self.registre.get_certificats(saved_text_cat)])
+        else:
+            self.cert_box.addItems([c.nom for c in self.registre.certificats])
+
+        # restoring saved text
+        self.membres.setEditText(saved_text_m)
+        self.categories.setEditText(saved_text_cat)
+        self.cert_box.setEditText(saved_text_cert)
+
+        # reconnecting slots
+        self.membres.currentTextChanged.connect(self.update)
+        self.categories.currentTextChanged.connect(self.update)
+        self.cert_box.currentTextChanged.connect(self.update)
+
         self.resize(self.layout.sizeHint())
 
 
+    def show_settings(self):
+        settings_window = SettingsWindow(self)
+        settings_window.show()
+
 
     def decerner_callback(self):
+        """awards or removes a certificate to a member"""
         membre = self.membres.currentText()
-        certificat = self.cert_boxes.get(self.categories.currentText(), MyComboBox()).currentText()
+        certificat = self.cert_box.currentText()
 
-        m = registre.find_membre_by_id(membre)
-        c = registre.find_certificat_by_name(certificat)
-        if not (m and c):
+        m = self.registre.find_membre_by_id(membre)
+        c = self.registre.find_certificat_by_name(certificat)
+        if not m or not c:
             return
         else:
             if self.decerner.text() == "Retirer certificat":
                 if not confirm(f"Retirer le certificat {c.nom} à {m.id} ?"):
                      return
-                registre.decerner_certificat(m, c, registre.CertificatPerdu)
+                self.registre.decerner_certificat(m, c, self.registre.CertificatPerdu)
                 self.rendre_certificateur.hide()
             elif self.decerner.text() == "Décerner certificat":
                 if not confirm(f"Décerner le certificat {c.nom} à {m.id} ?"):
                      return
-                registre.decerner_certificat(m, c, registre.Certifie)
+                self.registre.decerner_certificat(m, c, self.registre.Certifie)
                 self.rendre_certificateur.show()
 
             self.registre_updated_flag = True
@@ -210,85 +225,97 @@ class MainWindow(QMainWindow):
 
 
     def rendre_certificateur_callback(self):
+        """ makes the person able to award the certificate
+            to someone else """
         membre = self.membres.currentText()
-        certificat = self.cert_boxes.get(self.categories.currentText(), MyComboBox()).currentText()
+        certificat = self.cert_box.currentText()
 
-        m = registre.find_membre_by_id(membre)
-        c = registre.find_certificat_by_name(certificat)
-        self.rendre_certificateur.hide()
+        m = self.registre.find_membre_by_id(membre)
+        c = self.registre.find_certificat_by_name(certificat)
         if not (m and c):
             return
         else:
             if not confirm(f"Rendre {m.id} certificateur\xb7rice pour le certificat {c.nom} ?"):
                 return
-            registre.decerner_certificat(m, c, registre.Certificateur)
+            self.rendre_certificateur.hide()
+            self.registre.decerner_certificat(m, c, self.registre.Certificateur)
             self.registre_updated_flag = True
-
-        self.update()
+            self.update()
 
     def imprimer_callback(self):
-        excel.generer_registre(registre)
+        """ generates a printable excel file """
+        excel.generer_registre(self.registre)
 
-    def create_cert_box(self, nom, cat):
-        if cat not in self.cert_boxes:
-            self.cert_boxes[cat] = MyComboBox(placeholder="Certificat")
-            self.cert_boxes[cat].addItem(nom)
-            self.cert_boxes[cat].currentTextChanged.connect(self.update)
-            self.layout.insertWidget(3, self.cert_boxes[cat])
-            self.cert_boxes[cat].hide()
-        elif nom not in [c.nom for c in registre.get_certificats(cat)]:
-            self.cert_boxes[cat].addItem(nom)
-
-    def show_cert_boxes(self):
-        cat = self.categories.currentText()
-        if cat not in registre.categories:
+    def upload_in_thread(self):
+        """ uploads local register to cloud in separate thread """
+        if self.thread_running_flag:
             return
-
-        for c in registre.categories:
-            self.cert_boxes[c].hide()
-
-        if cat in registre.categories:
-            self.cert_boxes[cat].show()
-
-    def upload_in_thread(self, label):
+        else:
+            self.thread_running_flag = True
         self.thread = QThread()
-        self.uploader = Uploader()
+        self.uploader = multithreading.Uploader()
         self.uploader.moveToThread(self.thread)
         self.thread.started.connect(self.uploader.run)
         self.uploader.finished.connect(self.thread.quit)
         self.uploader.finished.connect(self.uploader.deleteLater)
         self.thread.finished.connect(self.thread.deleteLater)
 
-        self.uploader.finished.connect(
-            lambda: label.setText("Enregistré")
-        )
-        self.uploader.started.connect(
-            lambda: label.setText("Enregistrement...")
-        )
+        def finished():
+            self.thread_progress.setText("Enregistré")
+            self.thread_running_flag = False
+
+        def started():
+            self.thread_progress.setText("Enregistrement...")
+
+        self.uploader.finished.connect(finished)
+        self.uploader.started.connect(started)
+
+        self.registre.enregistrer()
+        self.thread.start()
+
+    def download_in_thread(self):
+        """ downloads register from cloud to local
+            file in separate thread """
+        if self.thread_running_flag:
+            return
+        else:
+            self.thread_running_flag = True
+        self.thread = QThread()
+        self.downloader = multithreading.Downloader()
+        self.downloader.moveToThread(self.thread)
+        self.thread.started.connect(self.downloader.run)
+        self.downloader.finished.connect(self.thread.quit)
+        self.downloader.finished.connect(self.downloader.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+
+        def finished():
+            self.registre.charger()
+            self.thread_progress.setText("Enregistré")
+            self.thread_running_flag = False
+
+        def started():
+            self.thread_progress.setText("Synchronisation...")
+
+        self.downloader.finished.connect(finished)
+        self.downloader.started.connect(started)
 
         self.thread.start()
 
+    def check_connection_in_thread(self):
+        """ continously checks if app is connected to internet """
+        self.check_thr = QThread()
+        self.checker = multithreading.ConnectionChecker()
+        self.checker.moveToThread(self.check_thr)
+        self.check_thr.started.connect(self.checker.run)
+        self.checker.finished.connect(self.check_thr.quit)
+        self.checker.finished.connect(self.checker.deleteLater)
+        self.check_thr.finished.connect(self.check_thr.deleteLater)
+        self.check_thr.start()
 
-app = QApplication(sys.argv)
 
-registre = Registre()
-print(registre)
-registre.ajouter_membres([("Christelle", "Alaux"), ("Christelle", "Bergerac"), ("Christophe", "Maé"),
-                          ("Marion", "Raynal"), ("Pierre", "Grangier"),
-                          ("melissandre-emmanuel", "schmidt")])
-registre.ajouter_certificats([("Guitare", "Musique"), ("Piano", "Musique"),
-                               ("Sortie", "Extérieur"), ("Grimper aux arbres",
-                                                          "Extérieur")])
-registre.enregistrer()
-print(registre)
-
-# creating local ids file if it doesn't exist
-if not os.path.exists("json_local_school_ids.json"):
-    with open("json_local_school_ids.json", "w") as f:
-        f.write("{}")
-
-window = MainWindow(registre)
-window.show()
-
-app.exec_()
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = MainUsage()
+    window.show()
+    app.exec_()
 

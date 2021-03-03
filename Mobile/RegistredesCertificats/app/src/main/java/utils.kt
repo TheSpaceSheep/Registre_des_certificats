@@ -16,6 +16,7 @@ fun getJsonDataFromFile(context: Context, fileName: String): String? {
 }
 
 fun copyJsonDataFromAssetToFilesDir(context: Context, fileName: String): String? {
+    // copy json file from assets to a file for which we have writing permissions
     val jsonString: String
     try {
         jsonString = context.assets.open(fileName).bufferedReader().use {it.readText()}
@@ -26,7 +27,6 @@ fun copyJsonDataFromAssetToFilesDir(context: Context, fileName: String): String?
     }
     return jsonString
 }
-
 
 fun createConfirmDialog(view: View, msg: String): AlertDialog.Builder{
     val builder = AlertDialog.Builder(view.context)
@@ -50,4 +50,8 @@ fun createErrorDialog(view: View, msg: String): AlertDialog.Builder{
     builder.setMessage(msg)
     builder.setPositiveButton("Ok"){_, _ -> Unit}
     return builder
+}
+
+fun loadDummyRegistre(context: Context){
+    copyJsonDataFromAssetToFilesDir(context, "registre_certificats.json")
 }
