@@ -52,6 +52,7 @@ class NewSchoolWindow(QMainWindow):
     def closeEvent(self, event):
         super(NewSchoolWindow, self).closeEvent(event)
         self.parentWidget().hide_widgets()
+        self.parentWidget().show()
         if self.parentWidget().parentWidget().school_name != "":
             self.parentWidget().close_avance()
 
@@ -95,6 +96,8 @@ class NewSchoolWindow(QMainWindow):
             return True
 
     def charger_creer_callback(self):
+        """ loads register if school name exists in cloud,
+            create new register otherwise """
         ecole = self.new_school_c.currentText()
         pwd = self.pwd_c.text()
         creer = self.new_school_c.currentText() not in self.list_of_schools
@@ -103,9 +106,11 @@ class NewSchoolWindow(QMainWindow):
             if cloud_support.creer_ecole(ecole, pwd):
                 self.list_of_schools.append(ecole)
                 dialog(f"Le registre pour l'école {ecole} a bien été créé.")
-                self.parentWidget().parentWidget().school_name = ecole
+                grand_parent = self.parentWidget().parentWidget()
+                grand_parent.school_name = ecole
                 self.close()
-                self.parentWidget().update()
+                self.parentWidget().close()
+                grand_parent.show_settings()
         else:
             try:
                 if cloud_support.download_registre(ecole, pwd):

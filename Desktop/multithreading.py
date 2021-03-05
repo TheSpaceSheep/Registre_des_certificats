@@ -7,9 +7,10 @@ import socket
 import time
 
 import cloud_support
-from widgets import*
+import widgets
 
 class Uploader(QObject):
+    """calls upload function from a thread"""
     started = pyqtSignal()
     finished = pyqtSignal()
     def run(self):
@@ -18,6 +19,7 @@ class Uploader(QObject):
         self.finished.emit()
 
 class Downloader(QObject):
+    """calls download function from a thread"""
     started = pyqtSignal()
     finished = pyqtSignal()
     def run(self):
@@ -31,6 +33,9 @@ class Downloader(QObject):
         self.finished.emit()
 
 class ConnectionChecker(QObject):
+    """Checks connection every 3 seconds and
+    displays a dialog if there is no connection
+    Application must always be connected to be usable"""
     started = pyqtSignal()
     finished = pyqtSignal()
     def run(self):
@@ -44,9 +49,8 @@ class ConnectionChecker(QObject):
                 # reachable
                 s = socket.create_connection((host, 80), 2)
                 s.close()
-                print("Connected.")
             except socket.gaierror:
-                dialog("Veuillez vérifier votre connection internet.", "Erreur")
+                widgets.dialog("Veuillez vérifier votre connection internet.", "Erreur")
             time.sleep(3)
 
 

@@ -41,31 +41,32 @@ class MainActivity : AppCompatActivity() {
     private val registre: Registre = Registre()
     var schoolName = ""
     var isEmpty = true  // no user input yet
+    var noFocus = true  // no widget has focus yet
     var registreUpdatedFlag = false
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        loadDummyRegistre(applicationContext)
 
         val schoolNameFile = File(filesDir, "school_name.txt")
+        if (!schoolNameFile.exists()){
+            schoolNameFile.createNewFile()
+        }
         val name = schoolNameFile.readText()
         if(name != "") schoolName = name
-
 
         setContentView(R.layout.activity_main)
 
         decerner.visibility = View.GONE
         retirer.visibility = View.GONE
         rendre_certificateur.visibility = View.GONE
-        // clearButton.visibility = View.GONE
 
         registre.filesDir = applicationContext.filesDir.toString()
-        registre.charger(applicationContext, "registre_certificats.json")
 
         if(schoolName != ""){
             loadRegistreInUI()
             titleButton.text = schoolName
+            registre.charger(applicationContext, "registre_certificats.json")
         }
         else titleButton.text = "Appuyez ici pour commencer"
     }
@@ -105,7 +106,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        if(isEmpty){
+        update()
+        if(isEmpty && noFocus){
             super.onBackPressed()
         }
         else{
@@ -155,10 +157,15 @@ class MainActivity : AppCompatActivity() {
                 categorie_actv.text.toString()==""&&
                 certificat_actv.text.toString()==""
 
+        noFocus = !(membre_actv.hasFocus() ||
+                categorie_actv.hasFocus() ||
+                certificat_actv.hasFocus())
+
         if(schoolName != "") titleButton.text = schoolName
-        else titleButton.text = "Appuyez ici pour commencer"
-
-
+        else{
+            titleButton.text = "Appuyez ici pour commencer"
+            return
+        }
 
         if(registreUpdatedFlag){
             uploadRegistre()
@@ -302,6 +309,10 @@ class MainActivity : AppCompatActivity() {
             registre.charger(applicationContext, "registre_certificats.json")
             loadRegistreInUI()
         }
+    }
+
+    fun actvCallback(v: View){
+        update()
     }
 }
 

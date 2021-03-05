@@ -7,21 +7,20 @@ from widgets import *
 from new_school_window import NewSchoolWindow
 import cloud_support
 import multithreading
+import time
 
 
 class SettingsWindow(QMainWindow):
-    """ Provides UI to edit the register (member and certificate list)
-        This window also serves as first screen for when there is no register
-        loaded yet, in which case it displays a prompt to create/load a
-        register """
+    """Provides UI to edit the register (member and certificate list)
+       This window also serves as first screen for when there is no register
+       loaded yet, in which case it displays a prompt to create/load a
+       register"""
     def __init__(self, parent):
         super(SettingsWindow, self).__init__(parent)
         self.thread_running_flag = False
         self.setWindowModality(Qt.WindowModal)  # freeze parent window
         self.registre = self.parentWidget().registre
         self.school_name = self.parentWidget().school_name
-        if not self.school_name:
-            self.school_name = "Cliquez ici pour commencer : "
 
         self.lay_out()
 
@@ -35,7 +34,10 @@ class SettingsWindow(QMainWindow):
             n = nom.text()
             if not p or not n:
                 return
-            self.registre.ajouter_membre(p, n)
+            err = self.registre.ajouter_membre(p, n)
+            if type(err) == str:
+                dialog(err, "Error")
+                return
             for _ in range(liste_membres.count()):
                 liste_membres.takeItem(0)
 
@@ -77,24 +79,26 @@ class SettingsWindow(QMainWindow):
             nom = nom_input.text()
             if not cat or not nom:
                 return
-            if cat not in self.registre.categories:
+            err = self.registre.ajouter_certificat(nom, cat)
+            if err is not None:
+                dialog(err, "Erreur")
+                return
+            if cat not in cert_lists:
                 cert_lists[cat] = ResizableListWidget()
                 b_left_layout.addWidget(cert_lists[cat])
                 cert_lists[cat].hide()
             else:
                 for _ in range(cert_lists[cat].count()):
                     cert_lists[cat].takeItem(0)
-            err = self.registre.ajouter_certificat(nom, cat)
-            if err is not None:
-                dialog(err, "Erreur")
             for _ in range(cat_list.count()):
                 cat_list.takeItem(0)
                 cat_input.removeItem(0)
             for categ in self.registre.categories:
                 cat_list.addItem(categ)
                 cat_input.addItem(categ)
-            for c in self.registre.get_certificats(cat):
-                cert_lists[cat].addItem(c.nom)
+            if cat in self.registre.categories:
+                for c in self.registre.get_certificats(cat):
+                    cert_lists[cat].addItem(c.nom)
 
             cat_list.setCurrentItem(cat_list.findItems(cat, Qt.MatchExactly)[0])
             cat_input.setCurrentText(cat)
@@ -106,7 +110,6 @@ class SettingsWindow(QMainWindow):
             c_row = cert_lists[cat].row(cert_lists[cat].currentItem())
             cert_lists[cat].takeItem(c_row)
             self.registre.supprimer_certificat(self.registre.find_certificat_by_name(nom))
-
 
         def suppr_cert_callback():
             cat = cat_list.currentItem()
@@ -141,6 +144,7 @@ class SettingsWindow(QMainWindow):
                 self.avance_w.hide()
 
         def change_school_callback():
+            self.hide()
             NewSchoolWindow(self).show()
 
         def supprimer_registre_callback():
@@ -299,6 +303,7 @@ class SettingsWindow(QMainWindow):
             self.school_name_w.setText("Cliquez ici pour commencer : ")
             self.gestion_membres.hide()
             self.gestion_certificats.hide()
+            self.change_school.show()
             self.supprimer_registre.hide()
             self.avance.hide()
             self.thread_progress.hide()
@@ -307,6 +312,7 @@ class SettingsWindow(QMainWindow):
     def closeEvent(self, event):
         super(SettingsWindow, self).closeEvent(event)
         self.parentWidget().update_comboboxes()
+        self.parentWidget().setWindowOpacity(1.)
 
     def close_avance(self):
         self.avance.setText("Avancé")

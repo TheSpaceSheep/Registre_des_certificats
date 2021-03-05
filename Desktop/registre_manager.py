@@ -3,6 +3,20 @@ import os
 import json
 
 class Membre:
+    """
+    Holds basic school member information
+
+    Attributes
+    ----------
+    prenom: str
+        first name of the member
+    nom: str
+        last name of the member
+    id: str
+        unique identification for the member (generated
+        based on the first and last name) this is the string
+        that will be displayed throughout the application
+    """
     def __init__(self, prenom, nom):
         self.prenom = prenom
         self.nom = nom
@@ -21,6 +35,17 @@ class Membre:
 
 
 class Certificat:
+    """
+    Holds basic information for a Certificate
+
+    Attributes
+    ----------
+    nom: str
+        name of the certificate. Must be unique in a register.
+    categorie: str
+        certificates are regrouped in categories,
+        to help the user identify them
+    """
     def __init__(self, nom, categorie):
         self.nom = nom
         self.categorie = categorie
@@ -38,12 +63,41 @@ class Certificat:
 
 
 class Registre:
+    """
+    Class to represent and modify a register.
+
+    Attributes
+    ----------
+
+    membres: list of "Membre" objects
+        list of all members in the school
+
+    certificats: list of "Certificat" objects
+        list of all certificates in the register
+
+    registre: dict [Membre, Certificat] -> value
+        dictionary that tells how a member relates to a certificate
+
+    categories: dict [category] -> list of certificates
+        lists of "Certificat" objects for each category
+
+
+
+    A member can relate to a certificate in the following ways:
+        - NonCertifie 0 : The member never had the certificate
+        - Certifie 1 : The member has the certificate
+        - Certificateur -1: The member can award the certificate to someone else
+        - CertificatPerdu -2: The member does not have the certificate anymore
+
+        note: it possible for a register value to be more than 1, to account for different
+        "certificate levels" though the rest of the app does not implement this functionality yet.
+    """
     NonCertifie = 0
+    Certifie = 1
     Certificateur = -1
     CertificatPerdu = -2
-    Certifie = 1
 
-    def __init__(self, file="registre_certificats.pk"):
+    def __init__(self):
         self.membres = []
         self.certificats = []
         self.registre = {}
@@ -51,6 +105,7 @@ class Registre:
 
 
     def ajouter_membre(self, prenom, nom):
+        """Adds a new member to the register"""
         m = Membre(prenom, nom)
 
         # S'ils ont le même prenom, rajouter quelques lettres du nom de famille
@@ -58,7 +113,7 @@ class Registre:
         for n in self.membres:
             if n.prenom == m.prenom:
                 if n.nom == m.nom:
-                    return 1
+                    return f"Il existe déjà un membre nommé {n.prenom} {n.nom}."
                 duplicates.append(n)
 
         if duplicates:
@@ -71,10 +126,13 @@ class Registre:
         return m
 
     def ajouter_membres(self, liste_membres):
+        """Adds a list of new member to the register"""
         for (prenom, nom) in liste_membres:
             self.ajouter_membre(prenom, nom)
 
     def ajouter_certificat(self, nom, categorie):
+        """Adds a certificate to the register
+        (category is created if it does not yet exist)"""
         c = Certificat(nom, categorie)
         for cert in self.certificats:
             # different certificats cannot have the same name 
@@ -92,11 +150,13 @@ class Registre:
 
 
     def ajouter_certificats(self, liste_certificats):
+        """Adds a list of certificates to the register"""
         for (nom, categorie) in liste_certificats:
             self.ajouter_certificat(nom, categorie)
 
 
     def supprimer_membre(self, m):
+        """removes member from register (and all associated register entries)"""
         if m in self.membres:
             self.membres.remove(m)
             for c in self.certificats:
@@ -115,9 +175,8 @@ class Registre:
             return False
 
     def supprimer_certificat(self, c):
+        """deletes a certificate from register (and all associated register entries)"""
         if c in self.certificats:
-            if not self.get_certificats(c.categorie):
-                self.categories.remove(c.categorie)
             self.certificats.remove(c)
             for m in self.membres:
                 del self.registre[m, c]
@@ -126,6 +185,7 @@ class Registre:
             return False
 
     def supprimer_categorie(self, cat):
+        """deletes a category from register (and all associated certificates and register entries)"""
         for c in self.get_certificats(cat):
             self.supprimer_certificat(c)
 
@@ -133,17 +193,26 @@ class Registre:
 
 
     def decerner_certificat(self, membre, certificat, niveau):
-        """0 : le membre n'a pas le certificat
-           -1: le membre est certificateur
-           -2: le membre doit repasser le certificat
-           1, 2, ... le membre a le certificat de niveau ..."""
+        """Changes the way the member relates to the certificate
+
+        Parameters
+        ----------
+        membre: Membre
+        certificat: Certificat
+        niveau: int
+            0 : the member never had the certificate
+           -1 : the member can award the certificate to someone else
+           -2 : the member has lost the certificate
+           1, 2, ... : the member has the certificate with level ..."""
         self.registre[membre, certificat] = niveau
 
     def a_le_certificat(self, membre, certificat):
-        """Returns
-           -----------------------
-           Bool : a le certificat
-           String : message explicatif"""
+        """
+        Returns
+        -----------------------
+        Int : the register entry associated with the Membre-Certificat pair
+        String : User-friendly message that can be displayed
+        """
         a = self.registre[membre, certificat]
         if a == Registre.NonCertifie:
             msg = f"{membre.prenom} n'a pas le certificat {certificat.nom}"
@@ -158,6 +227,9 @@ class Registre:
 
         return a, msg
 
+
+    # The following methods allow to find a Membre or Certificat object
+    # from string data (usually provided by the user)
     def find_membre_by_id(self, identification):
         for m in self.membres:
             if m.id == identification:
@@ -177,10 +249,11 @@ class Registre:
         return False
 
     def get_certificats(self, categorie):
-        """renvoie une liste des certificats pour une catégorie"""
+        """Returns the list of Certificat objects for the given category"""
         return [c for c in self.certificats if c.categorie == categorie]
 
     def enregistrer(self, file="registre_certificats.json"):
+        """Stores the register in a local file in JSON format"""
         jsonable = {}
         jsonable["membres"] = []
         for m in self.membres:
@@ -201,6 +274,7 @@ class Registre:
             reg_file.close()
 
     def charger(self, file="registre_certificats.json", merge=False):
+        """Loads a register from local JSON file into the Registre object"""
         try:
             if not merge: self.clear()
             with open(file, "r") as reg_file:
@@ -219,9 +293,12 @@ class Registre:
         except FileNotFoundError:
             print("file does not exist")
             self = Registre()
+        except Exception:
+            return False
 
 
     def clear(self):
+        """Erase all data"""
         self.membres = []
         self.certificats = []
         self.registre = {}
@@ -246,9 +323,14 @@ class Registre:
 
 
 def unambiguous_id(duplicates):
-    """duplicates is a list of Membre objects
-    that have the same prenom attribute"""
+    """
+    Ensures members ids are unique throughout the register
 
+    Parameters
+    ----------
+    duplicates: list of Membre objects
+        members that have the same prenom attribute
+    """
     old_ids = [n.id for n in duplicates]
     for n in duplicates:
         n.id = n.prenom + " "

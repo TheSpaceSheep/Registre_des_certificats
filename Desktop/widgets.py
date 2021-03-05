@@ -4,6 +4,9 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
+# Contains :
+# - PyQt widget subclasses to adjust widget behavior
+# - Utility functions for dialogs
 
 class MyComboBox(QComboBox):
     def __init__(self, placeholder="Enter Text"):
@@ -13,11 +16,6 @@ class MyComboBox(QComboBox):
         self.setInsertPolicy(QComboBox.NoInsert)
         self.lineEdit().setPlaceholderText(placeholder)
         self.setCurrentIndex(-1)
-        # sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        # self.setSizePolicy(sizePolicy)
-        # self.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
-        # self.resizeEvent = lambda x: resizeText(self, x)
-        # self.setMaximumHeight(40)
 
     def addItems(self, texts):
         super(MyComboBox, self).addItems(texts)
@@ -75,6 +73,7 @@ class ResizableListWidget(QListWidget):
 
 
 def confirm(message="Confirmer ?"):
+    """displays a message with an "ok" and "cancel" button"""
     dialog = QMessageBox()
     dialog.setIcon(QMessageBox.Information)
 
@@ -86,6 +85,7 @@ def confirm(message="Confirmer ?"):
     return retval == QMessageBox.Ok
 
 def dialog(msg, title="Information"):
+    """displays a simple dialog window with a message"""
     dialog = QMessageBox()
     dialog.setText(msg)
     dialog.setWindowTitle(title)

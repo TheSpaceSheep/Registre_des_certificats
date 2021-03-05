@@ -17,29 +17,34 @@ import sys
 # TODO: REFACTOOOR
 
 class MainUsage(QMainWindow):
-    """ Main window of the application, simple and designed
-        to be used by people who award certificates. """
+    """Main window of the application, kept simple and designed
+        to be used by people who award certificates."""
     def __init__(self):
         super(MainUsage, self).__init__()
 
         # continuously check connection in background
         self.check_connection_in_thread()
 
-        # trying to load register from local files
+        # checking if a register has previously been loaded
         self.registre = Registre()  # empty register
-        self.school_name = ""
+        self.school_name = ""  # also serves as indicator that a register has been loaded
         if os.path.exists("school_name.txt") and os.path.exists("p.rc"):
             with open("school_name.txt", "r") as f:
                 self.school_name = f.read()
             with open("p.rc") as f:
                 p = f.read()
             # if local files exist, download from cloud
-            if cloud_support.download_registre(self.school_name, p):
+            if self.school_name \
+            and cloud_support.download_registre(self.school_name, p):
                 self.registre = Registre()
                 self.registre.charger()
 
+        # if no register is loaded, settings_window serves as first screen to 
+        # guide user through creating/loading a new register
         if not self.school_name:
             self.show_settings()
+
+
 
         self.registre_updated_flag = False
         self.thread_running_flag = False
@@ -47,8 +52,8 @@ class MainUsage(QMainWindow):
         self.lay_out()
 
     def lay_out(self):
-        """ lays out main window on initialization
-            and connects button callbacks """
+        """lays out main window on initialization
+            and connects button callbacks"""
         self.setWindowTitle("Registre des certificats")
         self.layout = QVBoxLayout()
         self.title = QLabel("Registre des certificats")
@@ -138,7 +143,6 @@ class MainUsage(QMainWindow):
             self.status.setText(msg)
 
             if a == Registre.Certifie:
-                print("Certifié")
                 self.decerner.setText("Retirer certificat")
                 self.decerner.show()
                 self.rendre_certificateur.show()
@@ -156,8 +160,8 @@ class MainUsage(QMainWindow):
 
 
     def update_comboboxes(self):
-        """ Loads data from self.registre into the members and category
-        widgets """
+        """Loads data from self.registre into the members and category
+        widgets"""
         saved_text_m = self.membres.currentText()
         saved_text_cat = self.categories.currentText()
         saved_text_cert = self.cert_box.currentText()
@@ -193,11 +197,10 @@ class MainUsage(QMainWindow):
 
         self.resize(self.layout.sizeHint())
 
-
     def show_settings(self):
+        self.setWindowOpacity(0.)
         settings_window = SettingsWindow(self)
         settings_window.show()
-
 
     def decerner_callback(self):
         """awards or removes a certificate to a member"""

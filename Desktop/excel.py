@@ -47,6 +47,10 @@ def cm_to_points(cm):
 
 
 def generer_registre(registre, file="registre_des_certificats.xls"):
+    """
+    Generates a complete excel file with several sheets that represents the register
+    The pages can be printed and physically displayed at relevant locations in the school.
+    """
     wb = Workbook()
 
     # main page
@@ -62,8 +66,8 @@ def generer_registre(registre, file="registre_des_certificats.xls"):
     cell = wb.active.cell(2, 1)
     cell.value = "Registre des certificats"
     cell.alignment = Alignment(wrap_text=True,
-                                               horizontal="center",
-                                               vertical="center")
+                               horizontal="center",
+                               vertical="center")
     cell.border = thin_border
     cell.font = Font(name='arial', size=15, underline='single')
 
