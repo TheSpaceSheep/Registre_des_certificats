@@ -102,24 +102,23 @@ class NewSchoolWindow(QMainWindow):
         pwd = self.pwd_c.text()
         creer = self.new_school_c.currentText() not in self.list_of_schools
 
-        if creer and confirm(f"Créer un registre des certificats pour l'école {ecole} ?"):
-            if cloud_support.creer_ecole(ecole, pwd):
-                self.list_of_schools.append(ecole)
-                dialog(f"Le registre pour l'école {ecole} a bien été créé.")
-                grand_parent = self.parentWidget().parentWidget()
-                grand_parent.school_name = ecole
-                self.close()
-                self.parentWidget().close()
-                grand_parent.show_settings()
-        else:
-            try:
-                if cloud_support.download_registre(ecole, pwd):
-                    dialog(f"Le registre pour l'école {ecole} a bien été chargé.")
-                    self.parentWidget().parentWidget().school_name = ecole
-                    self.parentWidget().parentWidget().registre.clear()
-                    self.parentWidget().parentWidget().registre.charger()
-                    self.parentWidget().parentWidget().update_comboboxes()
+        if creer:
+            if confirm(f"Créer un registre des certificats pour l'école {ecole} ?"):
+                if cloud_support.creer_ecole(ecole, pwd):
+                    self.list_of_schools.append(ecole)
+                    dialog(f"Le registre pour l'école {ecole} a bien été créé.")
+                    grand_parent = self.parentWidget().parentWidget()
+                    grand_parent.school_name = ecole
                     self.close()
                     self.parentWidget().close()
-            except ValueError:
-                dialog("Mot de passe erroné", "Erreur")
+                    grand_parent.show_settings()
+        else:
+            if cloud_support.download_registre(ecole, pwd):
+                dialog(f"Le registre pour l'école {ecole} a bien été chargé.")
+                self.parentWidget().parentWidget().school_name = ecole
+                self.parentWidget().parentWidget().registre.clear()
+                self.parentWidget().parentWidget().registre.charger()
+                self.parentWidget().parentWidget().update_comboboxes()
+                self.close()
+                self.parentWidget().close()
+
