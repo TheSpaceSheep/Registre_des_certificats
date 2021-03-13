@@ -33,8 +33,6 @@ const val EXTRA_MESSAGE = "com.example.myfirstapp.MESSAGE"
 //val schoolListId = "2da280f42766"
 //val schoolIdsId = "f53b6f4631d6"
 
-//TODO: doesn't upload when decerning
-//TODO: doesn't detect changes and reload
 
 class MainActivity : AppCompatActivity() {
     private val CHANGE_SCHOOL_REQUEST = 1
@@ -56,6 +54,7 @@ class MainActivity : AppCompatActivity() {
         if(name != "") schoolName = name
 
         setContentView(R.layout.activity_main)
+
 
         decerner.visibility = View.GONE
         retirer.visibility = View.GONE
