@@ -1,9 +1,8 @@
 from openpyxl import Workbook
 from openpyxl.styles import *
+from openpyxl.utils import get_column_letter
 import os
-
-# TODO: font size
-# TODO: layout for printability
+import ipdb
 
 thin_border = Border(left=Side(style='thin'),
                      right=Side(style='thin'),
@@ -78,6 +77,7 @@ def generer_registre(registre, file="registre_des_certificats.xls"):
         cell.border = thick_border
         first = True
         for c in registre.get_certificats(cat):
+            if first: first = False
             cell = wb.active.cell(2, j)
             cell.value = c.nom
             cell.alignment = Alignment(horizontal="center",
@@ -85,8 +85,7 @@ def generer_registre(registre, file="registre_des_certificats.xls"):
                                        textRotation=90)
             cell.font = Font(name='arial', size=10)
             cell.border = thick_border_left if first else thin_border
-            first = False
-            wb.active.column_dimensions[chr(64+j)].width = 3
+            wb.active.column_dimensions[get_column_letter(j)].width = 3
             j += 1
         cell.border = thick_border_right
         wb.active.merge_cells(start_row=1,
@@ -177,7 +176,7 @@ def generer_registre(registre, file="registre_des_certificats.xls"):
                 else:
                     cell.border = thick_border_bottom if i%4==2 else thin_border
                 first = False
-                wb.active.column_dimensions[chr(64+j)].width = 5
+                wb.active.column_dimensions[get_column_letter(j)].width = 5
                 j += 1
             cell.border = thick_border_right_bottom if i%4==2 else thick_border_right
             i += 1

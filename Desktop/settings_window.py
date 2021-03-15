@@ -310,9 +310,9 @@ class SettingsWindow(QMainWindow):
             self.resize(710, 60)
 
     def closeEvent(self, event):
-        super(SettingsWindow, self).closeEvent(event)
         self.parentWidget().update_comboboxes()
         self.parentWidget().setWindowOpacity(1.)
+        super(SettingsWindow, self).closeEvent(event)
 
     def close_avance(self):
         self.avance.setText("Avancé")
