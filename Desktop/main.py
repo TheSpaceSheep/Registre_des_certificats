@@ -83,7 +83,7 @@ class MainUsage(QMainWindow):
         self.status.setWordWrap(True)
         self.status.setFont(QFont("unknown", 12))
         self.decerner = QPushButton("Décerner certificat")
-        self.rendre_certificateur = QPushButton("Nouveau Certificateur")
+        self.rendre_certificateur = QPushButton("Rendre Certificateur")
         self.thread_progress = QLabel("Enregistré")
         self.thread_progress.setAlignment(Qt.AlignRight)
         self.thread_progress.setStyleSheet("color:grey")
@@ -107,11 +107,11 @@ class MainUsage(QMainWindow):
 
         self.parametres.clicked.connect(self.show_settings)
         self.imprimer.clicked.connect(self.imprimer_callback)
+        self.decerner.clicked.connect(self.decerner_callback)
+        self.rendre_certificateur.clicked.connect(self.rendre_certificateur_callback)
         self.membres.currentTextChanged.connect(self.update)
         self.categories.currentTextChanged.connect(self.update)
         self.cert_box.currentTextChanged.connect(self.update)
-        self.decerner.clicked.connect(self.decerner_callback)
-        self.rendre_certificateur.clicked.connect(self.rendre_certificateur_callback)
 
 
     def update(self):
