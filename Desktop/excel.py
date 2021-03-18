@@ -2,7 +2,12 @@ from openpyxl import Workbook
 from openpyxl.styles import *
 from openpyxl.utils import get_column_letter
 import os
-import ipdb
+
+from registre_manager import Registre
+
+# TODO: font size
+# TODO: layout for printability
+# TODO: Make it printable (adjust row size and make other first rows)
 
 thin_border = Border(left=Side(style='thin'),
                      right=Side(style='thin'),
@@ -85,6 +90,7 @@ def generer_registre(registre, file="registre_des_certificats.xls"):
                                        textRotation=90)
             cell.font = Font(name='arial', size=10)
             cell.border = thick_border_left if first else thin_border
+            first = False
             wb.active.column_dimensions[get_column_letter(j)].width = 3
             j += 1
         cell.border = thick_border_right
@@ -94,8 +100,16 @@ def generer_registre(registre, file="registre_des_certificats.xls"):
                               end_column=j-1)
     i = 3
     # member rows
+    """
+    ValueError: Value must be one of {'lightDown', 'darkGray', 'lightHorizontal',
+    'lightVertical', 'darkDown', 'gray0625', 'solid', 'gray125', 'lightGray', 'darkGrid',
+    'lightGrid', 'lightUp', 'mediumGray', 'darkTrellis', 'darkVertical', 'lightTrellis', 'darkUp',
+    'darkHorizontal'
+
+    """
     for m in registre.membres:
         j = 2
+        wb.active.row_dimensions[j]
         cell = wb.active.cell(i, 1)
         cell.value = m.id
         cell.alignment = Alignment(horizontal="center", vertical="center")
@@ -104,7 +118,15 @@ def generer_registre(registre, file="registre_des_certificats.xls"):
             first = True
             for cert in registre.get_certificats(cat):
                 cell = wb.active.cell(i, j)
-                cell.value = registre.registre[m, cert]
+                if registre.registre[m, cert] == Registre.NonCertifie:
+                    cell.fill = PatternFill(bgColor="FFFFFF", fill_type = None)
+                elif registre.registre[m, cert] == Registre.Certifie:
+                    cell.fill = PatternFill(bgColor="00FF00", fill_type ="lightGrid")
+                elif registre.registre[m, cert] == Registre.Certificateur:
+                    cell.fill = PatternFill(bgColor="0000FF", fill_type ="lightGrid")
+                elif registre.registre[m, cert] == Registre.CertificatPerdu:
+                    cell.fill = PatternFill(bgColor="888888", fill_type ="lightGrid")
+
                 cell.alignment = Alignment(horizontal="center", vertical="center")
                 if first:
                     cell.border = thick_border_left_bottom if i%4==2 else thick_border_left
@@ -168,7 +190,17 @@ def generer_registre(registre, file="registre_des_certificats.xls"):
             first = True
             for cert in registre.get_certificats(cat):
                 cell = wb.active.cell(i, j)
-                cell.value = registre.registre[m, cert]
+                if registre.registre[m, cert] == Registre.NonCertifie:
+                    cell.fill = PatternFill(bgColor="FFFFFF", fill_type = None)
+                elif registre.registre[m, cert] == Registre.Certifie:
+                    cell.fill = PatternFill(bgColor="00FF00", fill_type ="lightGrid")
+                    cell.value = "c"
+                elif registre.registre[m, cert] == Registre.Certificateur:
+                    cell.fill = PatternFill(bgColor="0000FF", fill_type ="lightGrid")
+                    cell.value = "C"
+                elif registre.registre[m, cert] == Registre.CertificatPerdu:
+                    cell.fill = PatternFill(bgColor="888888", fill_type ="lightGrid")
+                    cell.value = "P"
                 cell.alignment = Alignment(horizontal="center",
                                            vertical="center")
                 if first:

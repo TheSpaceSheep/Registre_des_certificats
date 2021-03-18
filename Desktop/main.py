@@ -33,17 +33,20 @@ class MainUsage(QMainWindow):
                 self.school_name = f.read()
             with open("p.rc") as f:
                 p = f.read()
-            # if local files exist, download from cloud
-            if self.school_name \
-            and cloud_support.download_registre(self.school_name, p):
-                self.registre = Registre()
-                self.registre.charger()
+            try:
+                # if local files exist, download from cloud
+                if self.school_name \
+                and cloud_support.download_registre(self.school_name, p):
+                    self.registre = Registre()
+                    self.registre.charger()
+            except KeyError:
+                self.school_name = ""
+                open("school_name.txt", "w").close()
 
         # if no register is loaded, settings_window serves as first screen to 
         # guide user through creating/loading a new register
         if not self.school_name:
             self.show_settings()
-
 
 
         self.registre_updated_flag = False

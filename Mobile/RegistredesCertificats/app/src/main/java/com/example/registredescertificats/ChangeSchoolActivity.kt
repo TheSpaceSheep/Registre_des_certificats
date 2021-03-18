@@ -12,11 +12,11 @@ import com.android.volley.Request
 import com.android.volley.Response
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
-import getJsonDataFromCloud
 import kotlinx.android.synthetic.main.activity_change_school.*
 import java.io.File
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
+import createErrorDialog
 
 val api_key = "51c63f31-4635-11eb-bff2-0242ac110002"
 val schoolListId = "2da280f42766"
@@ -89,14 +89,17 @@ class ChangeSchoolActivity : AppCompatActivity() {
                                 val nameFile = File(applicationContext.filesDir, "school_name.txt")
                                 nameFile.writeText(name)
 
-                                println(response2)
-
                                 intent.putExtra("schoolName", name)
                                 setResult(Activity.RESULT_OK, intent)
                                 ok = true
                                 finish()
                             },
-                            Response.ErrorListener {response2 -> println(response2)})
+                            Response.ErrorListener {response2 ->
+                                val json = String(response2.networkResponse.data, Charsets.UTF_8)
+                                val gson = GsonBuilder().create()
+                                val jsonType = object : TypeToken<Map<String, String>>() {}.type
+                                val jsonObject: Map<String, String> = gson.fromJson(json, jsonType)
+                                createErrorDialog(v, jsonObject["message"].toString()).show()})
                             {
                                 override fun getHeaders(): MutableMap<String, String> {
                                     val headers = HashMap<String, String>()
@@ -108,7 +111,12 @@ class ChangeSchoolActivity : AppCompatActivity() {
                     println(response)
                     queue.add(loadSchool)
                 },
-                Response.ErrorListener {response -> println(response)})
+                Response.ErrorListener {response ->
+                    val json = String(response.networkResponse.data, Charsets.UTF_8)
+                    val gson = GsonBuilder().create()
+                    val jsonType = object : TypeToken<Map<String, String>>() {}.type
+                    val jsonObject: Map<String, String> = gson.fromJson(json, jsonType)
+                    createErrorDialog(v, jsonObject["message"].toString()).show()})
         queue.add(fetchSchoolIds)
         queue.cache.clear()
     }

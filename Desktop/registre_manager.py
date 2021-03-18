@@ -122,7 +122,8 @@ class Registre:
         self.membres.append(m) if m not in self.membres else self.membres
         for c in self.certificats:
             self.registre[m, c] = Registre.NonCertifie
-
+        
+        self.trier_membres()
         return m
 
     def ajouter_membres(self, liste_membres):
@@ -147,6 +148,8 @@ class Registre:
 
         for m in self.membres:
             self.registre[m, c] = Registre.NonCertifie
+
+        self.trier_certificats()
 
 
     def ajouter_certificats(self, liste_certificats):
@@ -252,8 +255,22 @@ class Registre:
         """Returns the list of Certificat objects for the given category"""
         return [c for c in self.certificats if c.categorie == categorie]
 
+    def trier_membres(self, order="id"):
+        if order == "id":
+            self.membres.sort(key=lambda m: m.id.lower())
+        elif order == "id_rev":
+            self.membres.sort(key=lambda m: m.id.lower(), reverse=True)
+        else:
+            raise NotImplemented
+
+    def trier_certificats(self):
+        self.certificats.sort(key=lambda c: c.nom.lower())
+
+
     def enregistrer(self, file="registre_certificats.json"):
         """Stores the register in a local file in JSON format"""
+        self.trier_membres("id")
+        self.trier_certificats()
         jsonable = {}
         jsonable["membres"] = []
         for m in self.membres:
@@ -290,6 +307,8 @@ class Registre:
                     for r in reg_cert["registre"][mid]:
                         c = self.find_certificat_by_name(r[0])
                         self.decerner_certificat(m, c, int(r[1]))
+                self.trier_membres()
+                self.trier_certificats()
         except FileNotFoundError:
             print("file does not exist")
             self = Registre()
