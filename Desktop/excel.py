@@ -5,6 +5,7 @@ from openpyxl.worksheet.page import PageMargins
 import os
 
 from registre_manager import Registre
+from widgets import dialog
 
 # TODO: font size
 # TODO: layout for printability
@@ -236,7 +237,22 @@ def generer_registre(registre, file="registre_des_certificats.xls"):
             i += 1
 
     wb.save(file)
-    os.system(f"libreoffice {file}&")
+	
+    if os.name == "nt":	
+        import winreg
+        try:
+            value = winreg.QueryValue(winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\LibreOffice\\UNO\\InstallPath")
+            os.system(f"start /B \"{value}\\soffice\" {file}")
+        except FileNotFoundError:
+            try:
+                value = winreg.QueryValue(winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Wow6432Node\\LibreOffice\\UNO\\InstallPath")
+                os.system(f"start /B \"{value}\\soffice\" {file}")
+            except FileNotFoundError:
+                dialog("Impossible d'ouvrir LibreOffice. Veuillez ouvrir le fichier manuellement")
+                os.system(f"explorer {os.getcwd()}/printable")
+    else:
+        print(os.name)
+        os.system(f"libreoffice {file}&")
 
 
 def center_all_cells(wb):
