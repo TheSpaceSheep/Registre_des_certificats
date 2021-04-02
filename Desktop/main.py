@@ -137,7 +137,16 @@ class MainUsage(QMainWindow):
         m = self.registre.find_membre_by_id(membre)
         c = self.registre.find_certificat_by_name(certificat)
 
-        if not m or not c:
+        if not m and not c:
+            self.status.setText("")
+            self.rendre_certificateur.hide()
+            self.decerner.hide()
+        # TODO: work here (compare with app)
+        elif m and not c:
+            self.status.setText(f"{m.prenom} a les certificats")
+            self.rendre_certificateur.hide()
+            self.decerner.hide()
+        elif not m and c:
             self.status.setText("")
             self.rendre_certificateur.hide()
             self.decerner.hide()
