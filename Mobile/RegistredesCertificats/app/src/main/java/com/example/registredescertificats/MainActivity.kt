@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.AttributeSet
+import android.view.MotionEvent
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
@@ -41,6 +42,7 @@ class MainActivity : AppCompatActivity() {
     var isEmpty = true  // no user input yet
     var noFocus = true  // no widget has focus yet
     var registreUpdatedFlag = false
+    var categorieactvTextChanged = true
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -63,11 +65,12 @@ class MainActivity : AppCompatActivity() {
         registre.filesDir = applicationContext.filesDir.toString()
 
         if(schoolName != ""){
-            loadRegistreInUI()
             titleButton.text = schoolName
             registre.charger(applicationContext, "registre_certificats.json")
+            loadRegistreInUI()
         }
         else titleButton.text = "Appuyez ici pour commencer"
+        update()
     }
 
     private fun loadRegistreInUI(){
@@ -98,8 +101,22 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        val catTextWatcher: TextWatcher = object: TextWatcher{
+            override fun afterTextChanged(s: Editable?) {
+            }
+
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+            }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                categorieactvTextChanged = true
+                update()
+            }
+        }
+
+
         membre_actv.addTextChangedListener(textWatcher)
-        categorie_actv.addTextChangedListener(textWatcher)
+        categorie_actv.addTextChangedListener(catTextWatcher)
         certificat_actv.addTextChangedListener(textWatcher)
 
     }
@@ -205,34 +222,59 @@ class MainActivity : AppCompatActivity() {
         // update status text
         status.text = ""
         status.visibility = View.GONE
-        val certificats = registre.getCertificats(categorie_actv.text.toString())
-        if(certificats.count() > 0){
-            val certificatArrayAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, mutableListOf<String>())
-            for(c in certificats) certificatArrayAdapter.insert(c.nom, 0)
-            certificat_actv.setAdapter(certificatArrayAdapter)
+        val cat = categorie_actv.text.toString()
+        if(categorieactvTextChanged) {
+            val certificats = registre.getCertificats(categorie_actv.text.toString())
+            if (certificats.count() > 0) {
+                val certificatArrayAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, mutableListOf<String>())
+                for (c in certificats) certificatArrayAdapter.insert(c.nom, 0)
+                certificat_actv.setAdapter(certificatArrayAdapter)
+            } else {
+                val certificatArrayAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, mutableListOf<String>())
+                for (c in registre.certificats) certificatArrayAdapter.insert(c.nom, certificatArrayAdapter.count)
+                certificat_actv.setAdapter(certificatArrayAdapter)
+            }
+            categorieactvTextChanged = false
         }
         val m = registre.findMembreById(membre_actv.text.toString()) ?: Membre("", "", id="")
         val c = registre.findCertificatByName(certificat_actv.text.toString()) ?: Certificat("", "")
-        val (ok, msg) = registre.aLeCertificat(m, c)
-        if(m.prenom == "" || c.nom == ""){
+        var msg = ""
+        if(m.prenom == "" && c.nom == ""){
             decerner.visibility = View.GONE
             rendre_certificateur.visibility = View.GONE
             retirer.visibility = View.GONE
             return
         }
-        this.hideKeyboard()
-        if(ok == Registre.Certifie){
-            decerner.visibility = View.GONE
-            rendre_certificateur.visibility = View.VISIBLE
-            retirer.visibility = View.VISIBLE}
-        else if(ok == Registre.NonCertifie || ok == Registre.CertificatPerdu) {
-            decerner.visibility = View.VISIBLE
-            rendre_certificateur.visibility = View.GONE
-            retirer.visibility = View.GONE}
-        else if(ok == Registre.Certificateur){
+        else if(m.prenom != "" && c.nom == ""){
             decerner.visibility = View.GONE
             rendre_certificateur.visibility = View.GONE
-            retirer.visibility = View.VISIBLE
+            retirer.visibility = View.GONE
+            val (_, m) = registre.getCertificatsForMember(m)
+            msg = m
+        }
+        else if(m.prenom == "" && c.nom != ""){
+            decerner.visibility = View.GONE
+            rendre_certificateur.visibility = View.GONE
+            retirer.visibility = View.GONE
+            val (_, m) = registre.getMembersForCertificat(c)
+            msg = m
+        }
+        else{
+            val (ok, m) = registre.aLeCertificat(m, c)
+            msg = m
+            if(ok == Registre.Certifie){
+                decerner.visibility = View.GONE
+                rendre_certificateur.visibility = View.VISIBLE
+                retirer.visibility = View.VISIBLE}
+            else if(ok == Registre.NonCertifie || ok == Registre.CertificatPerdu) {
+                decerner.visibility = View.VISIBLE
+                rendre_certificateur.visibility = View.GONE
+                retirer.visibility = View.GONE}
+            else if(ok == Registre.Certificateur){
+                decerner.visibility = View.GONE
+                rendre_certificateur.visibility = View.GONE
+                retirer.visibility = View.VISIBLE
+            }
         }
         status.visibility = View.VISIBLE
         status.text = msg
@@ -260,7 +302,8 @@ class MainActivity : AppCompatActivity() {
             registre.decernerCertificat(m, c, Registre.Certifie)
             registre.enregistrer()
             createInfoDialog(v, "${m.id} a maintenant le certificat ${c.nom}.").show()
-            clear()}
+            this.hideKeyboard()
+            update()}
         builder.show()
     }
 
@@ -273,7 +316,8 @@ class MainActivity : AppCompatActivity() {
             registre.decernerCertificat(m, c, Registre.CertificatPerdu)
             registre.enregistrer()
             createInfoDialog(v, "${m.id} a perdu le certificat ${c.nom}.").show()
-            clear()}
+            this.hideKeyboard()
+            update()}
         builder.show()
     }
 
@@ -287,7 +331,8 @@ class MainActivity : AppCompatActivity() {
             registre.decernerCertificat(m, c, Registre.Certificateur)
             registre.enregistrer()
             createInfoDialog(v, "${m.id} peut maintenant décerner le certificat ${c.nom}.").show()
-            clear()}
+            this.hideKeyboard()
+            update()}
         builder.show()
     }
 
@@ -323,9 +368,9 @@ class MyAutoCompleteTextView @JvmOverloads
     override fun enoughToFilter(): Boolean {
         return true
     }
-    override fun performClick(): Boolean{
+    override fun onTouchEvent(e: MotionEvent): Boolean{
         showDropDown()
-        return super.performClick()
+        return super.onTouchEvent(e)
     }
 }
 

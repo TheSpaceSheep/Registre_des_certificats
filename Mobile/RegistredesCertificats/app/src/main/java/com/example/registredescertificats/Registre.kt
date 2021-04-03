@@ -22,10 +22,10 @@ class Registre{
         val CertificatPerdu = -2
     }
 
-    var membres = mutableListOf<Membre>() // liste des membres de l'école
-    var certificats = mutableListOf<Certificat>() // liste de tous les certificats
-    var registre = mutableMapOf<Pair<Membre, Certificat>, Int>() // (membre, certificat) -> statut de certification
-    var categories = mutableMapOf<String, MutableList<Certificat>>() // categorie -> liste des certificats de cette catégorie
+    var membres = mutableListOf<Membre>()  // liste des membres de l'école
+    var certificats = mutableListOf<Certificat>()  // liste de tous les certificats
+    var registre = mutableMapOf<Pair<Membre, Certificat>, Int>()  // (membre, certificat) -> statut de certification
+    var categories = mutableMapOf<String, MutableList<Certificat>>()  // categorie -> liste des certificats de cette catégorie
     var filesDir = ""
 
     fun ajouterMembre(prenom: String, nom: String, id: String){
@@ -91,6 +91,7 @@ class Registre{
         }
         return null
     }
+
     fun getCertificats(categorie: String): List<Certificat> {
         //renvoie une liste des certificats pour une catégorie
         val l = mutableListOf<Certificat>()
@@ -100,6 +101,66 @@ class Registre{
             }
         }
         return l
+    }
+
+    fun getCertificatsForMember(m: Membre): Pair<List<Certificat>, String> {
+        val l = mutableListOf<Certificat>()
+        for (c in certificats) {
+            val (a, _) = aLeCertificat(m, c)
+            if (a == Registre.Certifie || a == Registre.Certificateur) {
+                l.add(c)
+            }
+        }
+        var msg = ""
+        if (l.size == 1) msg = "${m.prenom} a le certificat : ${l[0].nom}."
+        else if (l.size >= 2) {
+            msg = "${m.prenom} a les certificats : "
+            for (i in l.indices) {
+                msg += if (i < l.size - 1) {
+                    "${l[i].nom}, "
+                } else {
+                    "et ${l[i].nom}."
+                }
+            }
+        }
+        return if (l.isNotEmpty()) {
+            Pair(l, msg)
+        } else {
+            Pair(mutableListOf(), "")
+        }
+    }
+
+    fun getMembersForCertificat(c: Certificat): Pair<List<Membre>, String>{
+        val certifies = mutableListOf<Membre>()
+        val certificateurs = mutableListOf<Membre>()
+
+        for(m in membres){
+            val (a, _) = aLeCertificat(m, c)
+            if(a == Registre.Certifie){
+                certifies.add(m)
+            }
+            else if(a == Registre.Certificateur){
+                certificateurs.add(m)
+            }
+        }
+        var msg = "Les certificateurs pour le certificat ${c.nom} sont : "
+        if(certificateurs.size == 1) msg += certificateurs[0].id
+        else {
+            for (i in certificateurs.indices) {
+                msg += if (i < certificateurs.size - 1) {
+                    "${certificateurs[i].id}, "
+                } else {
+                    "et ${certificateurs[i].id}."
+                }
+            }
+        }
+        return if(certificateurs.isNotEmpty()){
+            Pair(certifies+certificateurs, msg)
+        }
+        else{
+            Pair(certifies+certificateurs, "Il n'y a pas encore de certificateur pour le certificat ${c.nom}")
+        }
+
     }
 
     fun charger(appctx: Context, file: String = "registre_certificats.json", merge: Boolean = false){

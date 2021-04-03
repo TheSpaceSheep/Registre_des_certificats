@@ -16,7 +16,7 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimary"
+            android:background="#154AE6"
             app:popupTheme="@style/Theme.RegistreDesCertificats.PopupOverlay"
             app:title="Charger Ecole" />
 
@@ -62,6 +62,8 @@
         android:height="70dp"
         android:onClick="validerCallback"
         android:text="Valider"
-        android:textSize="18sp" />
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        app:backgroundTint="#154AE6" />
 
 </LinearLayout>

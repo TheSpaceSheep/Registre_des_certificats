@@ -237,8 +237,10 @@ def generer_registre(registre, file="registre_des_certificats.xls"):
             i += 1
 
     wb.save(file)
-	
-    if os.name == "nt":	
+
+    # lauching libreoffice
+    # on windows
+    if os.name == "nt":
         import winreg
         try:
             value = winreg.QueryValue(winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\LibreOffice\\UNO\\InstallPath")
@@ -250,8 +252,8 @@ def generer_registre(registre, file="registre_des_certificats.xls"):
             except FileNotFoundError:
                 dialog("Impossible d'ouvrir LibreOffice. Veuillez ouvrir le fichier manuellement")
                 os.system(f"explorer {os.getcwd()}/printable")
-    else:
-        print(os.name)
+    # on linux
+    elif os.name == "posix":
         os.system(f"libreoffice {file}&")
 
 
