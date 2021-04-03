@@ -122,7 +122,7 @@ class Registre:
         self.membres.append(m) if m not in self.membres else self.membres
         for c in self.certificats:
             self.registre[m, c] = Registre.NonCertifie
-        
+
         self.trier_membres()
         return m
 
@@ -229,6 +229,47 @@ class Registre:
             msg = "Register internal error"
 
         return a, msg
+
+    def get_certificats_for_member(self, m):
+        l = []
+        for c in self.certificats:
+            a, _ = self.a_le_certificat(m, c)
+            if a == Registre.Certifie or a == Registre.Certificateur:
+                l.append(c)
+
+        msg = ""
+        if len(l) == 1: msg = f"{m.prenom} a le certificat : {l[0].nom}"
+        elif len(l) >= 2:
+            msg = f"{m.prenom} a les certificats : "
+            for i in range(len(l)):
+                if i < len(l) - 1:
+                    msg += f"{l[i].nom}, "
+                else:
+                    msg += f"et {l[i].nom}."
+
+        return l, msg
+
+    def get_members_for_certificat(self, c):
+        certifies = []
+        certificateurs = []
+        for m in self.membres:
+            a, _ = self.a_le_certificat(m, c)
+            if a == Registre.Certifie:
+                certifies.append(m)
+            elif a == Registre.Certificateur:
+                certificateurs.append(m)
+        msg = f"Les certificateurs pour le certificat {c.nom} sont : "
+        if len(certificateurs) == 1: msg += certificateurs[0].id
+        else:
+            for i in range(len(certificateurs)):
+                if i < len(certificateurs) - 1:
+                    msg += f"{certificateurs[i].id}, "
+                else:
+                    msg += f"et {certificateurs[i].id}."
+        if not certificateurs:
+            msg = f"Il n'y a pas encore de certificateurs pour le certificat {c.nom}."
+
+        return certifies+certificateurs, msg
 
 
     # The following methods allow to find a Membre or Certificat object

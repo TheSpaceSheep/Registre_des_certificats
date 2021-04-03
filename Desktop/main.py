@@ -84,6 +84,7 @@ class MainUsage(QMainWindow):
         self.status.setFont(QFont("unknown", 12))
         self.decerner = QPushButton("Décerner certificat")
         self.rendre_certificateur = QPushButton("Rendre Certificateur")
+        self.reinitialiser = QPushButton("Réinitialiser")
         self.thread_progress = QLabel("Enregistré")
         self.thread_progress.setAlignment(Qt.AlignRight)
         self.thread_progress.setStyleSheet("color:grey")
@@ -95,9 +96,11 @@ class MainUsage(QMainWindow):
         self.layout.addWidget(self.status)
         self.layout.addWidget(self.decerner)
         self.layout.addWidget(self.rendre_certificateur)
+        self.layout.addWidget(self.reinitialiser)
         self.layout.addWidget(self.thread_progress)
         self.decerner.hide()
         self.rendre_certificateur.hide()
+        self.reinitialiser.hide()
         widget = QWidget()
         widget.setLayout(self.layout)
         self.setCentralWidget(widget)
@@ -109,6 +112,7 @@ class MainUsage(QMainWindow):
         self.imprimer.clicked.connect(self.imprimer_callback)
         self.decerner.clicked.connect(self.decerner_callback)
         self.rendre_certificateur.clicked.connect(self.rendre_certificateur_callback)
+        self.reinitialiser.clicked.connect(self.reinitialiser_callback)
         self.membres.currentTextChanged.connect(self.update)
         self.categories.currentTextChanged.connect(self.update)
         self.cert_box.currentTextChanged.connect(self.update)
@@ -137,36 +141,43 @@ class MainUsage(QMainWindow):
         m = self.registre.find_membre_by_id(membre)
         c = self.registre.find_certificat_by_name(certificat)
 
+        if not m or not c:
+            self.rendre_certificateur.hide()
+            self.decerner.hide()
+            self.reinitialiser.hide()
+
         if not m and not c:
-            self.status.setText("")
-            self.rendre_certificateur.hide()
-            self.decerner.hide()
-        # TODO: work here (compare with app)
+            msg = ""
         elif m and not c:
-            self.status.setText(f"{m.prenom} a les certificats")
-            self.rendre_certificateur.hide()
-            self.decerner.hide()
+            _, msg = self.registre.get_certificats_for_member(m)
         elif not m and c:
-            self.status.setText("")
-            self.rendre_certificateur.hide()
-            self.decerner.hide()
+            _, msg = self.registre.get_members_for_certificat(c)
         else:
             a, msg = self.registre.a_le_certificat(m, c)
-            self.status.setText(msg)
 
             if a == Registre.Certifie:
                 self.decerner.setText("Retirer certificat")
                 self.decerner.show()
                 self.rendre_certificateur.show()
+                self.reinitialiser.hide()
             elif a == Registre.Certificateur:
                 self.decerner.setText("Retirer certificat")
                 self.decerner.show()
                 self.rendre_certificateur.hide()
-            elif a == Registre.NonCertifie or a == Registre.CertificatPerdu:
+                self.reinitialiser.hide()
+            elif a == Registre.NonCertifie:
                 self.decerner.setText("Décerner certificat")
                 self.decerner.show()
                 self.rendre_certificateur.hide()
+                self.reinitialiser.hide()
+            elif a == Registre.CertificatPerdu:
+                self.decerner.setText("Décerner certificat")
+                self.decerner.show()
+                self.reinitialiser.show()
+                self.rendre_certificateur.hide()
 
+
+        self.status.setText(msg)
         self.resize(QSize(max(self.layout.sizeHint().width(), self.width()),
                           max(self.layout.sizeHint().height(), self.height())))
 
@@ -215,7 +226,7 @@ class MainUsage(QMainWindow):
         settings_window.show()
 
     def decerner_callback(self):
-        """awards or removes a certificate to a member"""
+        """awards or removes a certificate to/from a member"""
         membre = self.membres.currentText()
         certificat = self.cert_box.currentText()
 
@@ -254,6 +265,25 @@ class MainUsage(QMainWindow):
                 return
             self.rendre_certificateur.hide()
             self.registre.decerner_certificat(m, c, self.registre.Certificateur)
+            self.registre_updated_flag = True
+            self.update()
+
+    def reinitialiser_callback(self):
+        """ Erase the history of a person who has lost a certificate (as if
+        they just never had the certificate) """
+        membre = self.membres.currentText()
+        certificat = self.cert_box.currentText()
+
+        m = self.registre.find_membre_by_id(membre)
+        c = self.registre.find_certificat_by_name(certificat)
+        if not (m and c):
+            return
+        else:
+            if not confirm(f"Effacer l'historique de {m.id} pour le certificat {c.nom} ?"):
+                return
+            self.rendre_certificateur.hide()
+            self.registre.decerner_certificat(m, c, self.registre.NonCertifie)
+            self.reinitialiser.hide()
             self.registre_updated_flag = True
             self.update()
 

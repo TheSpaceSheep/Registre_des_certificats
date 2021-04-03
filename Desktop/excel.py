@@ -52,10 +52,19 @@ def cm_to_points(cm):
     1 point = 1/72 of an inch... yeah..."""
     return cm*0.393701*72.
 
-MIN_ROW_HEIGHT = 0.20 * 72.
-MAX_ROW_HEIGHT = cm_to_points(1.)
-MIN_COLUMN_WIDTH = 0.20 * 72.
-MAX_COLUMN_WIDTH = cm_to_points(1.)
+def inches_to_points(inches):
+    return inches*72
+
+def inches_to_cm(inches):
+    return inches*2.54
+
+MIN_ROW_HEIGHT = inches_to_points(0.18)
+MAX_ROW_HEIGHT = cm_to_points(1)
+MIN_COLUMN_WIDTH = inches_to_points(0.18)
+MAX_COLUMN_WIDTH = cm_to_points(1)
+
+MARGINS = 0.3  # inches
+OFFSET = inches_to_points(0.1)
 
 def generer_registre(registre, file="registre_des_certificats.xls"):
     """
@@ -70,8 +79,9 @@ def generer_registre(registre, file="registre_des_certificats.xls"):
     # names cannot be longer than 15 characters
     wb.active.column_dimensions['A'].width = 15
 
+    wb.active.row_dimensions[1].height = cm_to_points(0.5)
     wb.active.row_dimensions[2].height = cm_to_points(4)
-    wb.active.page_margins = PageMargins(0.3, 0.3, 0.3, 0.3)
+    wb.active.page_margins = PageMargins(MARGINS, MARGINS, MARGINS, MARGINS)  # most printers should handle these margins
 
     # first two rows
     j = 2
@@ -105,6 +115,7 @@ def generer_registre(registre, file="registre_des_certificats.xls"):
                               start_column=j-len(registre.get_certificats(cat)),
                               end_row=1,
                               end_column=j-1)
+
     """
     ValueError: Value must be one of {'lightDown', 'darkGray', 'lightHorizontal',
     'lightVertical', 'darkDown', 'gray0625', 'solid', 'gray125', 'lightGray', 'darkGrid',
@@ -117,9 +128,11 @@ def generer_registre(registre, file="registre_des_certificats.xls"):
     k = 0
     for m in registre.membres:
         j = 2
-        height_hint = cm_to_points(29.7-6.2) / len(registre.membres)
-        if height_hint < MIN_ROW_HEIGHT:
-            wb.active.row_dimensions[i].height = MIN_ROW_HEIGHT
+        header_height = wb.active.row_dimensions[1].height + wb.active.row_dimensions[2].height
+        height_hint = (cm_to_points(29.7) - header_height - inches_to_points(2*MARGINS) - OFFSET) / len(registre.membres)
+        print(height_hint/72)
+        if height_hint < MIN_ROW_HEIGHT and height_hint > MIN_ROW_HEIGHT/2:
+            wb.active.row_dimensions[i].height = 2*height_hint
         elif height_hint > MAX_ROW_HEIGHT:
             wb.active.row_dimensions[i].height = MAX_ROW_HEIGHT
         else:
@@ -158,8 +171,9 @@ def generer_registre(registre, file="registre_des_certificats.xls"):
         wb.active = wb[cat]
 
         wb.active.column_dimensions['A'].width = 15
+        wb.active.row_dimensions[1].height = cm_to_points(0.5)
         wb.active.row_dimensions[2].height = cm_to_points(4)
-        wb.active.page_margins = PageMargins(0.3, 0.3, 0.3, 0.3)
+        wb.active.page_margins = PageMargins(MARGINS, MARGINS, MARGINS, MARGINS)  # most printers should handle these margins
 
         # first two rows
         cell = wb.active.cell(2, 1)
@@ -197,9 +211,12 @@ def generer_registre(registre, file="registre_des_certificats.xls"):
         i = 3
         # member rows
         for m in registre.membres:
-            height_hint = cm_to_points(29.7-6.2) / len(registre.membres)
-            if height_hint < MIN_ROW_HEIGHT:
-                wb.active.row_dimensions[i].height = MIN_ROW_HEIGHT
+            header_height = wb.active.row_dimensions[1].height + wb.active.row_dimensions[2].height
+            print(header_height/72)
+            height_hint = (cm_to_points(29.7) - header_height - inches_to_points(2*MARGINS) - OFFSET) / len(registre.membres)
+            print(height_hint/72)
+            if height_hint < MIN_ROW_HEIGHT and height_hint > MIN_ROW_HEIGHT/2:
+                wb.active.row_dimensions[i].height = 2*height_hint
             elif height_hint > MAX_ROW_HEIGHT:
                 wb.active.row_dimensions[i].height = MAX_ROW_HEIGHT
             else:

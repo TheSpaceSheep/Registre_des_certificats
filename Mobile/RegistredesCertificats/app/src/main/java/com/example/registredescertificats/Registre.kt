@@ -123,11 +123,7 @@ class Registre{
                 }
             }
         }
-        return if (l.isNotEmpty()) {
-            Pair(l, msg)
-        } else {
-            Pair(mutableListOf(), "")
-        }
+        return Pair(l, msg)
     }
 
     fun getMembersForCertificat(c: Certificat): Pair<List<Membre>, String>{
