@@ -71,7 +71,7 @@ def generer_registre(registre, file="registre_des_certificats.xls"):
     wb.active.column_dimensions['A'].width = 15
 
     wb.active.row_dimensions[2].height = cm_to_points(4)
-    wb.active.page_margins = PageMargins(0, 0, 0, 0)
+    wb.active.page_margins = PageMargins(0.3, 0.3, 0.3, 0.3)
 
     # first two rows
     j = 2
@@ -117,7 +117,7 @@ def generer_registre(registre, file="registre_des_certificats.xls"):
     k = 0
     for m in registre.membres:
         j = 2
-        height_hint = cm_to_points(29.7-4.6) / len(registre.membres)
+        height_hint = cm_to_points(29.7-6.2) / len(registre.membres)
         if height_hint < MIN_ROW_HEIGHT:
             wb.active.row_dimensions[i].height = MIN_ROW_HEIGHT
         elif height_hint > MAX_ROW_HEIGHT:
@@ -159,7 +159,7 @@ def generer_registre(registre, file="registre_des_certificats.xls"):
 
         wb.active.column_dimensions['A'].width = 15
         wb.active.row_dimensions[2].height = cm_to_points(4)
-        wb.active.page_margins = PageMargins(0, 0, 0, 0)
+        wb.active.page_margins = PageMargins(0.3, 0.3, 0.3, 0.3)
 
         # first two rows
         cell = wb.active.cell(2, 1)
@@ -197,7 +197,7 @@ def generer_registre(registre, file="registre_des_certificats.xls"):
         i = 3
         # member rows
         for m in registre.membres:
-            height_hint = cm_to_points(29.7-4.6) / len(registre.membres)
+            height_hint = cm_to_points(29.7-6.2) / len(registre.membres)
             if height_hint < MIN_ROW_HEIGHT:
                 wb.active.row_dimensions[i].height = MIN_ROW_HEIGHT
             elif height_hint > MAX_ROW_HEIGHT:
