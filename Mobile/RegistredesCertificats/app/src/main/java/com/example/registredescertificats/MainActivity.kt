@@ -6,6 +6,10 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkInfo
+import android.os.Build
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -14,18 +18,23 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.Response
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import createConfirmDialog
+import createErrorDialog
 import createInfoDialog
+import kotlinx.android.synthetic.main.activity_change_school.*
 import kotlinx.android.synthetic.main.activity_main.*
-import loadDummyRegistre
 import java.io.File
-import java.io.UnsupportedEncodingException
+import java.util.*
+import kotlin.collections.HashMap
+import kotlin.concurrent.timerTask
 
 
 const val EXTRA_MESSAGE = "com.example.myfirstapp.MESSAGE"
@@ -34,7 +43,6 @@ const val EXTRA_MESSAGE = "com.example.myfirstapp.MESSAGE"
 //val schoolListId = "2da280f42766"
 //val schoolIdsId = "f53b6f4631d6"
 
-
 class MainActivity : AppCompatActivity() {
     private val CHANGE_SCHOOL_REQUEST = 1
     private val registre: Registre = Registre()
@@ -42,7 +50,7 @@ class MainActivity : AppCompatActivity() {
     var isEmpty = true  // no user input yet
     var noFocus = true  // no widget has focus yet
     var registreUpdatedFlag = false
-    var categorieactvTextChanged = true
+    var updateCertificatActv = true
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,7 +65,6 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_main)
 
-
         decerner.visibility = View.GONE
         retirer.visibility = View.GONE
         rendre_certificateur.visibility = View.GONE
@@ -66,11 +73,20 @@ class MainActivity : AppCompatActivity() {
 
         if(schoolName != ""){
             titleButton.text = schoolName
+            updateCertificatActv = true
             registre.charger(applicationContext, "registre_certificats.json")
             loadRegistreInUI()
         }
         else titleButton.text = "Appuyez ici pour commencer"
         update()
+    }
+    private fun isNetworkAvailable(): Boolean {
+        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE)
+        return if (connectivityManager is ConnectivityManager) {
+            val networkInfo: NetworkInfo? = connectivityManager.activeNetworkInfo
+            networkInfo?.isConnected ?: false
+
+        } else false
     }
 
     private fun loadRegistreInUI(){
@@ -109,7 +125,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                categorieactvTextChanged = true
+                updateCertificatActv = true
                 update()
             }
         }
@@ -149,7 +165,11 @@ class MainActivity : AppCompatActivity() {
                 Response.Listener<String> {response ->
                     println(response)
                 },
-                Response.ErrorListener {response -> println(response)})
+                Response.ErrorListener {response ->
+                    if(response is NoConnectionError){
+                        createErrorDialog(ecole_actv, "Connection error.").show()
+                    }
+                println(response)})
         {
             override fun getHeaders(): MutableMap<String, String> {
                 val headers = HashMap<String, String>()
@@ -169,6 +189,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun update(){
+        val cm = baseContext.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val activeNetwork: NetworkInfo? = cm.activeNetworkInfo
+        val isConnected: Boolean = activeNetwork?.isConnectedOrConnecting == true
         isEmpty = membre_actv.text.toString()=="" &&
                 categorie_actv.text.toString()==""&&
                 certificat_actv.text.toString()==""
@@ -223,7 +246,7 @@ class MainActivity : AppCompatActivity() {
         status.text = ""
         status.visibility = View.GONE
         val cat = categorie_actv.text.toString()
-        if(categorieactvTextChanged) {
+        if(updateCertificatActv) {
             val certificats = registre.getCertificats(categorie_actv.text.toString())
             if (certificats.count() > 0) {
                 val certificatArrayAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, mutableListOf<String>())
@@ -234,7 +257,7 @@ class MainActivity : AppCompatActivity() {
                 for (c in registre.certificats) certificatArrayAdapter.insert(c.nom, certificatArrayAdapter.count)
                 certificat_actv.setAdapter(certificatArrayAdapter)
             }
-            categorieactvTextChanged = false
+            updateCertificatActv = false
         }
         val m = registre.findMembreById(membre_actv.text.toString()) ?: Membre("", "", id="")
         val c = registre.findCertificatByName(certificat_actv.text.toString()) ?: Certificat("", "")
@@ -294,6 +317,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun decernerCallback(v: View){
+        if(!isNetworkAvailable()){
+            createErrorDialog(v, "Connection error.").show()
+            return
+        }
         val m = registre.findMembreById(membre_actv.text.toString()) ?: return
         val c = registre.findCertificatByName(certificat_actv.text.toString()) ?: return
         val builder = createConfirmDialog(v, "Décerner le certificat ${c.nom} à ${m.id} ?")
@@ -308,6 +335,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun retirerCallback(v: View){
+        if(!isNetworkAvailable()){
+            createErrorDialog(v, "Connection error.").show()
+            return
+        }
         val m = registre.findMembreById(membre_actv.text.toString()) ?: return
         val c = registre.findCertificatByName(certificat_actv.text.toString()) ?: return
         val builder = createConfirmDialog(v, "Retirer le certificat ${c.nom} à ${m.id} ?")
@@ -322,10 +353,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun rendreCertificateurCallback(v: View){
+        if(!isNetworkAvailable()){
+            createErrorDialog(v, "Connection error.").show()
+            return
+        }
         val m = registre.findMembreById(membre_actv.text.toString()) ?: return
         val c = registre.findCertificatByName(certificat_actv.text.toString()) ?: return
         val builder = createConfirmDialog(v, "Rendre ${m.id} certificateur\u00b7ice pour le certificat ${c.nom} ?")
-        //uploadInThread()
         builder.setPositiveButton("Ok"){_, _ ->
             registreUpdatedFlag = true
             registre.decernerCertificat(m, c, Registre.Certificateur)
@@ -337,6 +371,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun titleCallback(v: View){
+        if(!isNetworkAvailable()){
+            createErrorDialog(v, "Connection error.").show()
+            return
+        }
         val intent = Intent(this, ChangeSchoolActivity::class.java)
         startActivityForResult(intent, CHANGE_SCHOOL_REQUEST)
     }
@@ -365,6 +403,7 @@ class MyAutoCompleteTextView @JvmOverloads
                 attr: AttributeSet? = null,
                 defStyleAttr: Int = 0) : androidx.appcompat.widget.AppCompatAutoCompleteTextView(context, attr, defStyleAttr)
 {
+    // init{setDropDownBackgroundDrawable()}
     override fun enoughToFilter(): Boolean {
         return true
     }

@@ -8,6 +8,7 @@ import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.android.volley.NoConnectionError
 import com.android.volley.Request
 import com.android.volley.Response
 import com.android.volley.toolbox.StringRequest
@@ -43,7 +44,11 @@ class ChangeSchoolActivity : AppCompatActivity() {
                     val ecoleArrayAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, listeEcoles)
                     ecole_actv.setAdapter(ecoleArrayAdapter)
                 },
-                Response.ErrorListener {println("That Didn't Work")})
+                Response.ErrorListener {response ->
+                    if(response is NoConnectionError){
+                        createErrorDialog(ecole_actv, "Connection error.").show()
+                    }
+                })
         queue.add(stringRequest)
         queue.cache.clear()
 
@@ -95,11 +100,17 @@ class ChangeSchoolActivity : AppCompatActivity() {
                                 finish()
                             },
                             Response.ErrorListener {response2 ->
-                                val json = String(response2.networkResponse.data, Charsets.UTF_8)
-                                val gson = GsonBuilder().create()
-                                val jsonType = object : TypeToken<Map<String, String>>() {}.type
-                                val jsonObject: Map<String, String> = gson.fromJson(json, jsonType)
-                                createErrorDialog(v, jsonObject["message"].toString()).show()})
+                                if(response2 is NoConnectionError){
+                                    createErrorDialog(v, "Connection error.").show()
+                                }
+                                else{
+                                    val json = String(response2.networkResponse.data, Charsets.UTF_8)
+                                    val gson = GsonBuilder().create()
+                                    val jsonType = object : TypeToken<Map<String, String>>() {}.type
+                                    val jsonObject: Map<String, String> = gson.fromJson(json, jsonType)
+                                    createErrorDialog(v, jsonObject["message"].toString()).show()
+                                }
+                            })
                             {
                                 override fun getHeaders(): MutableMap<String, String> {
                                     val headers = HashMap<String, String>()
@@ -112,11 +123,17 @@ class ChangeSchoolActivity : AppCompatActivity() {
                     queue.add(loadSchool)
                 },
                 Response.ErrorListener {response ->
-                    val json = String(response.networkResponse.data, Charsets.UTF_8)
-                    val gson = GsonBuilder().create()
-                    val jsonType = object : TypeToken<Map<String, String>>() {}.type
-                    val jsonObject: Map<String, String> = gson.fromJson(json, jsonType)
-                    createErrorDialog(v, jsonObject["message"].toString()).show()})
+                    if(response is NoConnectionError){
+                        createErrorDialog(v, "Connection error.").show()
+                    }
+                    else{
+                        println(response.networkResponse.toString())
+                        val json = String(response.networkResponse.data, Charsets.UTF_8)
+                        val gson = GsonBuilder().create()
+                        val jsonType = object : TypeToken<Map<String, String>>() {}.type
+                        val jsonObject: Map<String, String> = gson.fromJson(json, jsonType)
+                        createErrorDialog(v, jsonObject["message"].toString()).show()
+                    }})
         queue.add(fetchSchoolIds)
         queue.cache.clear()
     }

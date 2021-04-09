@@ -38,7 +38,7 @@
 
         <com.example.registredescertificats.MyAutoCompleteTextView
             android:id="@+id/membre_actv"
-            style="@android:style/Widget.Holo.AutoCompleteTextView"
+            style="@android:style/Widget.DeviceDefault.AutoCompleteTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="32dp"
@@ -56,7 +56,7 @@
 
         <com.example.registredescertificats.MyAutoCompleteTextView
             android:id="@+id/categorie_actv"
-            style="@android:style/Widget.Holo.AutoCompleteTextView"
+            style="@android:style/Widget.DeviceDefault.AutoCompleteTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="32dp"
@@ -74,7 +74,7 @@
 
         <com.example.registredescertificats.MyAutoCompleteTextView
             android:id="@+id/certificat_actv"
-            style="@android:style/Widget.Holo.AutoCompleteTextView"
+            style="@android:style/Widget.DeviceDefault.AutoCompleteTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="32dp"
