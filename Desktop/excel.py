@@ -7,8 +7,6 @@ import os
 from registre_manager import Registre
 from widgets import dialog
 
-# TODO: font size
-# TODO: layout for printability
 # TODO: Make it printable (adjust row size and make other first rows)
 
 thin_border = Border(left=Side(style='thin'),
@@ -130,7 +128,6 @@ def generer_registre(registre, file="registre_des_certificats.xls"):
         j = 2
         header_height = wb.active.row_dimensions[1].height + wb.active.row_dimensions[2].height
         height_hint = (cm_to_points(29.7) - header_height - inches_to_points(2*MARGINS) - OFFSET) / len(registre.membres)
-        print(height_hint/72)
         if height_hint < MIN_ROW_HEIGHT and height_hint > MIN_ROW_HEIGHT/2:
             wb.active.row_dimensions[i].height = 2*height_hint
         elif height_hint > MAX_ROW_HEIGHT:
@@ -212,9 +209,7 @@ def generer_registre(registre, file="registre_des_certificats.xls"):
         # member rows
         for m in registre.membres:
             header_height = wb.active.row_dimensions[1].height + wb.active.row_dimensions[2].height
-            print(header_height/72)
             height_hint = (cm_to_points(29.7) - header_height - inches_to_points(2*MARGINS) - OFFSET) / len(registre.membres)
-            print(height_hint/72)
             if height_hint < MIN_ROW_HEIGHT and height_hint > MIN_ROW_HEIGHT/2:
                 wb.active.row_dimensions[i].height = 2*height_hint
             elif height_hint > MAX_ROW_HEIGHT:
