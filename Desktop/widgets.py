@@ -3,6 +3,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
+import language_selector as ls
 
 # Contains :
 # - PyQt widget subclasses to adjust widget behavior
@@ -72,20 +73,22 @@ class ResizableListWidget(QListWidget):
         return size
 
 
-def confirm(message="Confirmer ?"):
+def confirm(message=""):
     """displays a message with an "ok" and "cancel" button"""
+    if not message: message = ls.strings.CONFIRM
     dialog = QMessageBox()
     dialog.setIcon(QMessageBox.Information)
 
     dialog.setText(message)
-    dialog.setWindowTitle("Confirmation")
+    dialog.setWindowTitle(ls.strings.CONFIRMATION)
     dialog.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
 
     retval = dialog.exec_()
     return retval == QMessageBox.Ok
 
-def dialog(msg, title="Information"):
+def dialog(msg, title=""):
     """displays a simple dialog window with a message"""
+    if not title: title = ls.strings.INFORMATION
     dialog = QMessageBox()
     dialog.setText(msg)
     dialog.setWindowTitle(title)

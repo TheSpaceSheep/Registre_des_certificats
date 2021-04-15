@@ -8,6 +8,7 @@ import time
 
 import cloud_support
 import widgets
+import language_selector as ls
 
 class Uploader(QObject):
     """calls upload function from a thread"""
@@ -50,7 +51,7 @@ class ConnectionChecker(QObject):
                 s = socket.create_connection((host, 80), 2)
                 s.close()
             except socket.gaierror:
-                widgets.dialog("Veuillez vérifier votre connection internet.", "Erreur")
+                widgets.dialog(ls.strings.CHECK_INTERNET_CONNECTION, ls.strings.ERROR)
             time.sleep(3)
 
 

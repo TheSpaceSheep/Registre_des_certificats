@@ -5,13 +5,14 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from widgets import *
 import cloud_support
+import language_selector as ls
 
 class NewSchoolWindow(QMainWindow):
     """ Create or load a register to/from the cloud """
     def __init__(self, parent):
         super(NewSchoolWindow, self).__init__(parent)
         self.setWindowModality(Qt.WindowModal)  # freeze parent window
-        self.setWindowTitle("Charger ou créer un registre")
+        self.setWindowTitle(ls.strings.LOAD_OR_CREATE_REGISTER)
 
         self.list_of_schools = cloud_support.fetch_list_of_schools()
         if self.list_of_schools == 1:
@@ -22,17 +23,17 @@ class NewSchoolWindow(QMainWindow):
     def lay_out(self):
         main_widget = QWidget()
         self.layout = QFormLayout()
-        self.new_school_l = QLabel("Ecole :")
-        self.new_school_c = MyComboBox("Entrer un nom")
+        self.new_school_l = QLabel(ls.strings.SCHOOL)
+        self.new_school_c = MyComboBox(ls.strings.ENTER_NAME)
         self.new_school_c.addItems(self.list_of_schools)
-        self.pwd_l = QLabel("Mot de passe :")
+        self.pwd_l = QLabel(ls.strings.PASSWORD)
         self.pwd_c = QLineEdit()
-        self.pwd_confirm_l = QLabel("Confirmer mot de passe :")
+        self.pwd_confirm_l = QLabel(ls.strings.CONFIRM_PASSWORD)
         self.pwd_confirm_c = QLineEdit()
-        self.pwd_check_l = QLabel("Les mots de passe ne correspondent pas")
+        self.pwd_check_l = QLabel(ls.strings.PASSWORDS_DONT_MATCH)
         self.pwd_check_l.setFont(QFont("arial", 9))
         self.pwd_check_l.setStyleSheet('color: red')
-        self.charger_creer = ResizableButton("Valider")
+        self.charger_creer = ResizableButton(ls.strings.VALIDATE)
         self.charger_creer.clicked.connect(self.charger_creer_callback)
         self.pwd_c.setEchoMode(QLineEdit.Password)
         self.pwd_confirm_c.setEchoMode(QLineEdit.Password)
@@ -73,13 +74,13 @@ class NewSchoolWindow(QMainWindow):
             self.pwd_confirm_l.hide()
             self.pwd_confirm_c.setText("")
         elif t not in self.list_of_schools:
-            self.charger_creer.setText("Créer registre")
+            self.charger_creer.setText(ls.strings.CREATE_REGISTER)
             self.charger_creer.show()
             if self.pwd_c.text() != "":
                 self.pwd_confirm_c.show()
                 self.pwd_confirm_l.show()
         else:
-            self.charger_creer.setText("Charger registre")
+            self.charger_creer.setText(ls.strings.LOAD_REGISTER)
             self.charger_creer.show()
             self.pwd_confirm_c.hide()
             self.pwd_confirm_l.hide()
@@ -103,10 +104,10 @@ class NewSchoolWindow(QMainWindow):
         creer = self.new_school_c.currentText() not in self.list_of_schools
 
         if creer:
-            if confirm(f"Créer un registre des certificats pour l'école {ecole} ?"):
+            if confirm(ls.strings.CREATE_REGISTER_FOR_SCHOOL(ecole)):
                 if cloud_support.creer_ecole(ecole, pwd):
                     self.list_of_schools.append(ecole)
-                    dialog(f"Le registre pour l'école {ecole} a bien été créé.")
+                    dialog(ls.strings.REGISTER_FOR_SCHOOL_HAS_BEEN_CREATED(ecole))
                     grand_parent = self.parentWidget().parentWidget()
                     grand_parent.school_name = ecole
                     self.close()
@@ -114,7 +115,7 @@ class NewSchoolWindow(QMainWindow):
                     grand_parent.show_settings()
         else:
             if cloud_support.download_registre(ecole, pwd):
-                dialog(f"Le registre pour l'école {ecole} a bien été chargé.")
+                dialog(ls.strings.REGISTER_FOR_SCHOOL_HAS_BEEN_LOADED(ecole))
                 self.parentWidget().parentWidget().school_name = ecole
                 self.parentWidget().parentWidget().registre.clear()
                 self.parentWidget().parentWidget().registre.charger()

@@ -5,22 +5,24 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 
-from widgets import *
 from registre_manager import Registre
 import excel
 from settings_window import SettingsWindow
 import multithreading
 import cloud_support
+import language_selector as ls
+from widgets import *
 
 import sys
 
-# TODO: REFACTOOOR
 
 class MainUsage(QMainWindow):
     """Main window of the application, kept simple and designed
         to be used by people who award certificates."""
     def __init__(self):
         super(MainUsage, self).__init__()
+        if not ls.load_language():
+            ls.select_language("en")
 
         # continuously check connection in background
         self.check_connection_in_thread()
@@ -57,35 +59,35 @@ class MainUsage(QMainWindow):
     def lay_out(self):
         """lays out main window on initialization
             and connects button callbacks"""
-        self.setWindowTitle("Registre des certificats")
+        self.setWindowTitle(ls.strings.TITLE)
         self.layout = QVBoxLayout()
-        self.title = QLabel("Registre des certificats")
+        self.title = QLabel(ls.strings.TITLE)
         self.title.setFont(QFont("unknown", 13))
         self.title.setAlignment(Qt.AlignCenter)
         self.param_imprim = QWidget()
         self.h_layout = QHBoxLayout()
         self.h_layout.setContentsMargins(0, 0, 0, 0)
-        self.parametres = QPushButton("Paramètres")
-        self.imprimer = QPushButton("Imprimer")
+        self.parametres = QPushButton(ls.strings.PARAMETERS_BUTTON)
+        self.imprimer = QPushButton(ls.strings.PRINT_BUTTON)
         self.h_layout.addWidget(self.parametres)
         self.h_layout.addWidget(self.imprimer)
         self.param_imprim.setLayout(self.h_layout)
-        self.membres = MyComboBox(placeholder="Membre")
+        self.membres = MyComboBox(placeholder=ls.strings.MEMBER_CB)
         self.membres.setFont(QFont("unknown", 13))
         self.membres.addItems([m.id for m in self.registre.membres])
-        self.categories = MyComboBox(placeholder="Catégorie")
+        self.categories = MyComboBox(placeholder=ls.strings.CATEG_CB)
         self.categories.setFont(QFont("unknown", 13))
         self.categories.addItems([c for c in self.registre.categories])
-        self.cert_box = MyComboBox(placeholder="Certificat")
+        self.cert_box = MyComboBox(placeholder=ls.strings.CERT_CB)
         self.cert_box.setFont(QFont("unknown", 13))
         self.status = QLabel()
         self.status.setAlignment(Qt.AlignCenter)
         self.status.setWordWrap(True)
         self.status.setFont(QFont("unknown", 12))
-        self.decerner = QPushButton("Décerner certificat")
-        self.rendre_certificateur = QPushButton("Rendre Certificateur")
-        self.reinitialiser = QPushButton("Réinitialiser")
-        self.thread_progress = QLabel("Enregistré")
+        self.decerner = QPushButton(ls.strings.AWARD_CERTIFICATE)
+        self.rendre_certificateur = QPushButton(ls.strings.MAKE_CERTIFICATOR_BUTTON)
+        self.reinitialiser = QPushButton(ls.strings.REINITIALIZE_BUTTON)
+        self.thread_progress = QLabel(ls.strings.SAVED)
         self.thread_progress.setAlignment(Qt.AlignRight)
         self.thread_progress.setStyleSheet("color:grey")
         self.layout.addWidget(self.title)
@@ -156,22 +158,22 @@ class MainUsage(QMainWindow):
             a, msg = self.registre.a_le_certificat(m, c)
 
             if a == Registre.Certifie:
-                self.decerner.setText("Retirer certificat")
+                self.decerner.setText(ls.strings.REVOKE_CERTIFICATE)
                 self.decerner.show()
                 self.rendre_certificateur.show()
                 self.reinitialiser.hide()
             elif a == Registre.Certificateur:
-                self.decerner.setText("Retirer certificat")
+                self.decerner.setText(ls.strings.REVOKE_CERTIFICATE)
                 self.decerner.show()
                 self.rendre_certificateur.hide()
                 self.reinitialiser.hide()
             elif a == Registre.NonCertifie:
-                self.decerner.setText("Décerner certificat")
+                self.decerner.setText(ls.strings.AWARD_CERTIFICATE)
                 self.decerner.show()
                 self.rendre_certificateur.hide()
                 self.reinitialiser.hide()
             elif a == Registre.CertificatPerdu:
-                self.decerner.setText("Décerner certificat")
+                self.decerner.setText(ls.strings.AWARD_CERTIFICATE)
                 self.decerner.show()
                 self.reinitialiser.show()
                 self.rendre_certificateur.hide()
@@ -235,13 +237,14 @@ class MainUsage(QMainWindow):
         if not m or not c:
             return
         else:
-            if self.decerner.text() == "Retirer certificat":
-                if not confirm(f"Retirer le certificat {c.nom} à {m.id} ?"):
+            if self.decerner.text() == ls.strings.REVOKE_CERTIFICATE:
+                if not confirm(ls.strings.REMOVE_CERTIFICATE_FROM(m.id, c.nom)):
                      return
                 self.registre.decerner_certificat(m, c, self.registre.CertificatPerdu)
                 self.rendre_certificateur.hide()
-            elif self.decerner.text() == "Décerner certificat":
-                if not confirm(f"Décerner le certificat {c.nom} à {m.id} ?"):
+            elif self.decerner.text() == ls.strings.AWARD_CERTIFICATE:
+
+                if not confirm(ls.strings.AWARD_CERTIFICATE_TO(m.id, c.nom)):
                      return
                 self.registre.decerner_certificat(m, c, self.registre.Certifie)
                 self.rendre_certificateur.show()
@@ -261,7 +264,7 @@ class MainUsage(QMainWindow):
         if not (m and c):
             return
         else:
-            if not confirm(f"Rendre {m.id} certificateur\xb7rice pour le certificat {c.nom} ?"):
+            if not confirm(ls.strings.MAKE_CERTIFICATOR(m.id, c.nom)):
                 return
             self.rendre_certificateur.hide()
             self.registre.decerner_certificat(m, c, self.registre.Certificateur)
@@ -279,7 +282,7 @@ class MainUsage(QMainWindow):
         if not (m and c):
             return
         else:
-            if not confirm(f"Effacer l'historique de {m.id} pour le certificat {c.nom} ?"):
+            if not confirm(ls.strings.CLEAR_HISTORY(m.id, c.nom)):
                 return
             self.rendre_certificateur.hide()
             self.registre.decerner_certificat(m, c, self.registre.NonCertifie)
@@ -306,11 +309,11 @@ class MainUsage(QMainWindow):
         self.thread.finished.connect(self.thread.deleteLater)
 
         def finished():
-            self.thread_progress.setText("Enregistré")
+            self.thread_progress.setText(ls.strings.SAVED)
             self.thread_running_flag = False
 
         def started():
-            self.thread_progress.setText("Enregistrement...")
+            self.thread_progress.setText(ls.strings.SAVING)
 
         self.uploader.finished.connect(finished)
         self.uploader.started.connect(started)
@@ -335,11 +338,11 @@ class MainUsage(QMainWindow):
 
         def finished():
             self.registre.charger()
-            self.thread_progress.setText("Enregistré")
+            self.thread_progress.setText(ls.strings.SAVED)
             self.thread_running_flag = False
 
         def started():
-            self.thread_progress.setText("Synchronisation...")
+            self.thread_progress.setText(ls.strings.SYNCHRONIZING)
 
         self.downloader.finished.connect(finished)
         self.downloader.started.connect(started)
@@ -359,6 +362,7 @@ class MainUsage(QMainWindow):
 
 
 if __name__ == "__main__":
+    ls.init()
     app = QApplication(sys.argv)
     window = MainUsage()
     window.show()

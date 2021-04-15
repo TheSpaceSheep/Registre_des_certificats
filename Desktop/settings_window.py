@@ -8,6 +8,7 @@ from new_school_window import NewSchoolWindow
 import cloud_support
 import multithreading
 import time
+import language_selector as ls
 
 
 class SettingsWindow(QMainWindow):
@@ -25,7 +26,7 @@ class SettingsWindow(QMainWindow):
         self.lay_out()
 
     def lay_out(self):
-        self.setWindowTitle("Paramètres")
+        self.setWindowTitle(ls.strings.PARAMETERS_BUTTON)
         self.layout = QVBoxLayout()
 
         # -----------  Callback functions  ----------
@@ -36,7 +37,7 @@ class SettingsWindow(QMainWindow):
                 return
             err = self.registre.ajouter_membre(p, n)
             if type(err) == str:
-                dialog(err, "Error")
+                dialog(err, ls.strings.ERROR)
                 return
             for _ in range(liste_membres.count()):
                 liste_membres.takeItem(0)
@@ -62,7 +63,7 @@ class SettingsWindow(QMainWindow):
                 for cat in cert_lists:
                     cert_lists[cat].hide()
                 cert_lists[x.text()].show()
-                cert_label.setText(f"Certificats {x.text()} :")
+                cert_label.setText(ls.strings.X_CAT_CERTIFICATES(x.text()))
             else:
                 cat_input.setCurrentIndex(-1)
 
@@ -81,7 +82,7 @@ class SettingsWindow(QMainWindow):
                 return
             err = self.registre.ajouter_certificat(nom, cat)
             if err is not None:
-                dialog(err, "Erreur")
+                dialog(err, ls.strings.ERROR)
                 return
             if cat not in cert_lists:
                 cert_lists[cat] = ResizableListWidget()
@@ -123,7 +124,7 @@ class SettingsWindow(QMainWindow):
             self.update_registre()
 
         def suppr_cat_callback():
-            if confirm("Supprimer Catégorie ?"):
+            if confirm(ls.strings.DELETE_CATEGORY_Q):
                 if cat_list.currentItem() is None:
                     return
                 cat = cat_list.currentItem().text()
@@ -136,11 +137,11 @@ class SettingsWindow(QMainWindow):
                 self.update_registre()
 
         def avance_callback():
-            if self.avance.text() == "Avancé":
-                self.avance.setText("Masquer")
+            if self.avance.text() == ls.strings.ADVANCED:
+                self.avance.setText(ls.strings.HIDE)
                 self.avance_w.show()
             else:
-                self.avance.setText("Avancé")
+                self.avance.setText(ls.strings.ADVANCED)
                 self.avance_w.hide()
 
         def change_school_callback():
@@ -154,6 +155,11 @@ class SettingsWindow(QMainWindow):
                 self.registre.clear()
             self.hide_widgets()
 
+        def change_language_callback():
+            ls.select_language(ls.strings.code)
+            self.lay_out()
+            self.parentWidget().lay_out()
+
         # --------------------------------------------------
 
         # header : create/load/delete online register buttons
@@ -164,15 +170,15 @@ class SettingsWindow(QMainWindow):
         self.school_name_w = QLabel(self.school_name)
         self.school_name_w.setFont(QFont("unknown", f))
         self.school_name_w.setMaximumHeight(60)
-        self.avance = QCommandLinkButton("Avancé")
+        self.avance = QCommandLinkButton(ls.strings.ADVANCED)
         self.avance.setMaximumWidth(100)
         self.avance_w = QWidget()
         if self.school_name != "": self.avance_w.hide()
         avance_layout = QHBoxLayout()
         avance_layout.setContentsMargins(0, 0, 0, 0)
         self.avance_w.setLayout(avance_layout)
-        self.change_school = QPushButton("Créer/Charger registre")
-        self.supprimer_registre = QPushButton("Supprimer registre")
+        self.change_school = QPushButton(ls.strings.CREATE_LOAD_REGISTER)
+        self.supprimer_registre = QPushButton(ls.strings.DELETE_REGISTER)
         self.supprimer_registre.setMaximumWidth(300)
         avance_layout.addWidget(self.change_school)
         avance_layout.addWidget(self.supprimer_registre)
@@ -196,17 +202,17 @@ class SettingsWindow(QMainWindow):
         t_right_layout = QVBoxLayout()
         t_left_w.setLayout(t_left_layout)
         t_right_w.setLayout(t_right_layout)
-        liste_membres_label = QLabel("Liste des membres :")
-        ajouter_membre = QLabel("Ajouter membre :")
-        prenom = MyLineEdit(placeholder="Prénom")
-        nom = MyLineEdit(placeholder="Nom")
+        liste_membres_label = QLabel(ls.strings.MEMBER_LIST)
+        ajouter_membre = QLabel(ls.strings.ADD_MEMBER)
+        prenom = MyLineEdit(placeholder=ls.strings.FIRST_NAME)
+        nom = MyLineEdit(placeholder=ls.strings.LAST_NAME)
         prenom.setFont(QFont("unknown", 15))
         nom.setFont(QFont("unknown", 15))
         liste_membres = ResizableListWidget()
         for m in self.registre.membres:
             liste_membres.addItem(m.id)
-        valider = ResizableButton("Valider")
-        retirer_membre = ResizableButton("Retirer le membre")
+        valider = ResizableButton(ls.strings.VALIDATE)
+        retirer_membre = ResizableButton(ls.strings.REMOVE_MEMBER)
         t_left_layout.addWidget(liste_membres_label)
         t_left_layout.addWidget(liste_membres)
         t_left_layout.addWidget(retirer_membre)
@@ -227,26 +233,23 @@ class SettingsWindow(QMainWindow):
         b_right_layout = QVBoxLayout()
         b_left_w.setLayout(b_left_layout)
         b_right_w.setLayout(b_right_layout)
-        cat_label = QLabel("Catégories :")
+        cat_label = QLabel(ls.strings.CATEGORIES)
         cat_list = ResizableListWidget()
         cat_list.addItems(self.registre.categories)
-        cert_label = QLabel("Certificats :")
-        ajouter_certificat = QLabel("Ajouter certificat :")
-        cat_input = MyComboBox(placeholder="Catégorie")
+        cert_label = QLabel(ls.strings.CERTIFICATES)
+        ajouter_certificat = QLabel(ls.strings.ADD_CERTIFICATE)
+        cat_input = MyComboBox(placeholder=ls.strings.CATEGORY)
         cat_input.setFont(QFont("unknown", 15))
         cat_input.addItems(self.registre.categories)
-        valider_cert = ResizableButton("Valider")
-        nom_input = MyLineEdit(placeholder="Nom du certificat")
+        valider_cert = ResizableButton(ls.strings.VALIDATE)
+        nom_input = MyLineEdit(placeholder=ls.strings.CERTIFICATE_NAME)
         nom_input.setFont(QFont("unknown", 15))
         supprs_w = QWidget()
         supprs_layout = QHBoxLayout()
-        suppr_cert = ResizableButton("Supprimer Certificat")
-        suppr_cat = ResizableButton("Supprimer Catégorie")
+        suppr_cert = ResizableButton(ls.strings.DELETE_CERTIFICATE)
+        suppr_cat = ResizableButton(ls.strings.DELETE_CATEGORY)
         supprs_w.setLayout(supprs_layout)
         self.gestion_certificats.setLayout(certificats_layout)
-        self.thread_progress = QLabel("Enregistré")
-        self.thread_progress.setAlignment(Qt.AlignRight)
-        self.thread_progress.setStyleSheet("color:grey")
         b_left_layout.addWidget(cat_label)
         b_left_layout.addWidget(cat_list)
         b_left_layout.addWidget(cert_label)
@@ -266,9 +269,22 @@ class SettingsWindow(QMainWindow):
         b_right_layout.addWidget(supprs_w)
         certificats_layout.addWidget(b_left_w)
         certificats_layout.addWidget(b_right_w)
+
+        # footer
+        self.footer = QWidget()
+        footer_layout = QHBoxLayout()
+        change_language = QPushButton(ls.strings.LANGUAGE + ls.strings.name)
+        change_language.setMaximumWidth(change_language.sizeHint().width())
+        self.thread_progress = QLabel(ls.strings.SAVED)
+        self.thread_progress.setAlignment(Qt.AlignRight)
+        self.thread_progress.setStyleSheet("color:grey")
+        footer_layout.addWidget(change_language)
+        footer_layout.addWidget(self.thread_progress)
+        self.footer.setLayout(footer_layout)
+
         self.layout.addWidget(self.gestion_membres)
         self.layout.addWidget(self.gestion_certificats)
-        self.layout.addWidget(self.thread_progress)
+        self.layout.addWidget(self.footer)
         main_widget = QWidget()
         main_widget.setLayout(self.layout)
         self.setCentralWidget(main_widget)
@@ -282,6 +298,7 @@ class SettingsWindow(QMainWindow):
         valider_cert.clicked.connect(valider_cert_callback)
         suppr_cert.clicked.connect(suppr_cert_callback)
         suppr_cat.clicked.connect(suppr_cat_callback)
+        change_language.clicked.connect(change_language_callback)
 
         cat_list.setCurrentRow(0, QItemSelectionModel.Select)
 
@@ -300,7 +317,7 @@ class SettingsWindow(QMainWindow):
             self.thread_progress.show()
             self.resize(710, 600)
         else:
-            self.school_name_w.setText("Cliquez ici pour commencer : ")
+            self.school_name_w.setText(ls.strings.CLICK_HERE_TO_BEGIN)
             self.gestion_membres.hide()
             self.gestion_certificats.hide()
             self.change_school.show()
@@ -315,7 +332,7 @@ class SettingsWindow(QMainWindow):
         super(SettingsWindow, self).closeEvent(event)
 
     def close_avance(self):
-        self.avance.setText("Avancé")
+        self.avance.setText(ls.strings.ADVANCED)
         self.avance_w.hide()
 
     def upload_in_thread(self):
@@ -332,11 +349,11 @@ class SettingsWindow(QMainWindow):
         self.thread.finished.connect(self.thread.deleteLater)
 
         def finished():
-            self.thread_progress.setText("Enregistré")
+            self.thread_progress.setText(ls.strings.SAVED)
             self.thread_running_flag = False
 
         def started():
-            self.thread_progress.setText("Enregistrement...")
+            self.thread_progress.setText(ls.strings.SAVING)
 
         self.uploader.finished.connect(finished)
         self.uploader.started.connect(started)

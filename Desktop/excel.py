@@ -6,8 +6,7 @@ import os
 
 from registre_manager import Registre
 from widgets import dialog
-
-# TODO: Make it printable (adjust row size and make other first rows)
+import language_selector as ls
 
 thin_border = Border(left=Side(style='thin'),
                      right=Side(style='thin'),
@@ -72,7 +71,7 @@ def generer_registre(registre, file="registre_des_certificats.xls"):
     wb = Workbook()
 
     # main page
-    wb.active.title = "Registre"
+    wb.active.title = ls.strings.REGISTER
 
     # names cannot be longer than 15 characters
     wb.active.column_dimensions['A'].width = 15
@@ -84,7 +83,7 @@ def generer_registre(registre, file="registre_des_certificats.xls"):
     # first two rows
     j = 2
     cell = wb.active.cell(2, 1)
-    cell.value = "Registre des certificats"
+    cell.value = ls.strings.REGISTER_OF_CERTIFICATES
     cell.alignment = Alignment(wrap_text=True,
                                horizontal="center",
                                vertical="center")
@@ -262,7 +261,7 @@ def generer_registre(registre, file="registre_des_certificats.xls"):
                 value = winreg.QueryValue(winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\Wow6432Node\\LibreOffice\\UNO\\InstallPath")
                 os.system(f"start /B \"{value}\\soffice\" {file}")
             except FileNotFoundError:
-                dialog("Impossible d'ouvrir LibreOffice. Veuillez ouvrir le fichier manuellement")
+                dialog(ls.strings.CANT_OPEN_LIBREOFFICE)
                 os.system(f"explorer {os.getcwd()}/printable")
     # on linux
     elif os.name == "posix":

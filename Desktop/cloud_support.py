@@ -5,6 +5,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 import requests
 import json
+import language_selector as ls
 
 import widgets
 from registre_manager import Registre
@@ -23,7 +24,7 @@ def fetch_list_of_schools():
         else:
             return json.loads(response.text)["school_list"]
     except Exception:
-        widgets.dialog("Une erreur est survenue lors du téléchargement de la liste des écoles", "Erreur")
+        widgets.dialog(ls.strings.ERROR_DURING_SCHOOL_LIST_DOWNLOAD, ls.strings.ERROR)
         return 1
 
 
@@ -87,15 +88,15 @@ def creer_ecole(ecole, pwd):
 
     except Exception as error:
         print(repr(error))
-        widgets.dialog("Une erreur est survenue lors de la création du registre", "Error")
+        widgets.dialog(ls.strings.ERROR_WHEN_CREATING_REGISTER, ls.strings.ERROR)
         return False
 
 
 def supprimer_registre(ecole):
     """deletes a register in the cloud and associated local files"""
     pwd, ok = QInputDialog.getText(None,
-                                   "Authorisation requise",
-                                   "Enter password", QLineEdit.Password)
+                                   ls.strings.AUTHORIZATION_REQUIRED,
+                                   ls.strings.ENTER_PASSWORD, QLineEdit.Password)
     if not ok:
         return False
 
@@ -114,15 +115,15 @@ def supprimer_registre(ecole):
                                    headers={"Api-key": api_key,
                                             "Security-key": pwd})
         if not response:
-            widgets.dialog("Mot de passe erronné", "Erreur d'authenficiation")
+            widgets.dialog(ls.strings.WRONG_PASSWORD, ls.strings.AUTHENTICATION_ERROR)
             return False
 
     except Exception as error:
-        widgets.dialog("Une erreur est survenue lors de la suppression du registre. Veuillez réessayer.", "Error")
+        widgets.dialog(ls.strings.ERROR_DURING_REGISTER_DELETION, ls.strings.ERROR)
         print(repr(error))
         return False
 
-    if widgets.confirm(f"Supprimer le registre de certificats de l'école {ecole} (toutes les données seront perdues) ?"):
+    if widgets.confirm(ls.strings.DELETE_REGISTER_FOR_SCHOOL(ecole)):
         try:
             response = requests.delete(f"https://json.extendsclass.com/bin/{school_id}",
                                        headers={"Api-key": api_key,
@@ -157,7 +158,7 @@ def supprimer_registre(ecole):
 
             return True
         except IOError as error:
-            widgets.dialog("Une erreur est survenue lors de la suppression du registre. Veuillez réessayer.", "Error")
+            widgets.dialog(ls.strings.ERROR_DURING_REGISTER_DELETION, ls.strings.ERROR)
             print(repr(error))
             return False
 
@@ -191,7 +192,7 @@ def download_registre(ecole, pwd):
         return True
 
     except IOError:
-        widgets.dialog("Une erreur est survenue lors du chargement du registre. Veuillez réessayer.", "Error")
+        widgets.dialog(ls.strings.ERROR_WHILE_LOADING_REGISTER, ls.strings.ERROR)
         return False
 
 
@@ -202,7 +203,7 @@ def upload_registre():
             pwd = f.read()
         pwd_prompted = False
     except FileNotFoundError:
-        pwd, ok = QInputDialog.getText(None, "Authorisation requise", "Enter password")
+        pwd, ok = QInputDialog.getText(None, ls.strings.AUTHORIZATION_REQUIRED, ls.strings.ENTER_PASSWORD)
         if not ok:
             return
         pwd_prompted = True
@@ -217,7 +218,7 @@ def upload_registre():
             widgets.dialog(json.loads(response.text)["message"], str(response))
             return False
     except Exception:
-        widgets.dialog("Une erreur est survenue lors de la mise en ligne du registre. Veuillez réessayer.", "Error")
+        widgets.dialog(ls.strings.ERROR_WHILE_UPLOADING_REGISTER, ls.strings.ERROR)
         return False
 
     d = json.loads(response.text)
@@ -238,6 +239,6 @@ def upload_registre():
                 f.write(pwd)
         return True
     except Exception:
-        widgets.dialog("Une erreur est survenue lors de la mise en ligne du registre. Veuillez réessayer.", "Error")
+        widgets.dialog(ls.strings.ERROR_WHILE_UPLOADING_REGISTER, ls.strings.ERROR)
         return False
 
