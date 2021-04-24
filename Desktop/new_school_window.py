@@ -110,6 +110,10 @@ class NewSchoolWindow(QMainWindow):
                     dialog(ls.strings.REGISTER_FOR_SCHOOL_HAS_BEEN_CREATED(ecole))
                     grand_parent = self.parentWidget().parentWidget()
                     grand_parent.school_name = ecole
+                    grand_parent.registre.clear()
+                    grand_parent.registre.charger()
+                    grand_parent.update_comboboxes()
+                    self.parentWidget().lay_out()
                     self.close()
                     self.parentWidget().close()
                     grand_parent.show_settings()

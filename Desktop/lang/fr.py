@@ -115,11 +115,11 @@ class StringsFR:
         if len(certificators) == 1: msg += certificators[0]
         else:
             for i in range(len(certificators)):
-                if i < len(certificateurs) - 1:
+                if i < len(certificators) - 1:
                     msg += f"{certificators[i]}, "
                 else:
                     msg += f"et {certificators[i]}."
-        if not certificateurs:
+        if not certificators:
             msg = f"Il n'y a pas encore de certificateurs pour le certificat {c}."
 
     def X_CAT_CERTIFICATES(self, category):

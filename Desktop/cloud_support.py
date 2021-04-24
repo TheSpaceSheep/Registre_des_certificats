@@ -71,6 +71,9 @@ def creer_ecole(ecole, pwd):
         with open("school_name.txt", "w") as f:
             f.write(ecole)
 
+        with open("p.rc", "w") as f:
+            f.write(pwd)
+
         # creating/erasing register local file
         open("registre_certificats.json", "w").close()
 

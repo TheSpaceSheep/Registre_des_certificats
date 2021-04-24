@@ -338,6 +338,8 @@ class MainUsage(QMainWindow):
 
         def finished():
             self.registre.charger()
+            self.update_comboboxes()
+            self.update()
             self.thread_progress.setText(ls.strings.SAVED)
             self.thread_running_flag = False
 
