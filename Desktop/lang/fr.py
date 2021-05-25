@@ -99,9 +99,9 @@ class StringsFR:
 
     def HAS_CERTIFICATES(self, m, l):
         msg = ""
-        if len(l) == 1: msg = f"{m} a le certificat : {l[0]}"
+        if len(l) == 1: msg = f"{m.prenom} a le certificat : {l[0]}"
         elif len(l) >= 2:
-            msg = f"{m} a les certificats : "
+            msg = f"{m.prenom} a les certificats : "
             for i in range(len(l)):
                 if i < len(l) - 1:
                     msg += f"{l[i]}, "
