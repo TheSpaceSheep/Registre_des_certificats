@@ -66,6 +66,7 @@ class StringsFR:
         self.INFORMATION = "Information"
         self.SELECT_LANGUAGE = "Sélectionner la langue"
         self.LANGUAGE = "Langue : "
+        self.PLEASE_ENTER_CERTIFICATE_NAME_AND_CATEGORY = "Veuillez entrer une catégorie et un nom pour créer un nouveau certificat."
 
     def REMOVE_CERTIFICATE_FROM(self, m, c):
         return f"Retirer le certificat {c}, à {m} ?"

@@ -79,6 +79,7 @@ class SettingsWindow(QMainWindow):
             cat = cat_input.currentText()
             nom = nom_input.text()
             if not cat or not nom:
+                dialog(ls.strings.PLEASE_ENTER_CERTIFICATE_NAME_AND_CATEGORY)
                 return
             err = self.registre.ajouter_certificat(nom, cat)
             if err is not None:
