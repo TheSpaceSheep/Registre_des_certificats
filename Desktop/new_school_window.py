@@ -1,8 +1,7 @@
 # coding: utf-8
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
+from PyQt5.QtGui import QFont
+from PyQt5.QtWidgets import QMainWindow, QWidget, QFormLayout, QLabel, QLineEdit
+from PyQt5.QtCore import Qt, QTimer
 from widgets import *
 import cloud_support
 import language_selector as ls

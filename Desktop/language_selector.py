@@ -1,7 +1,7 @@
 # coding: utf-8
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
+# from PyQt5.QtGui import *
+from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QDialog, QLabel, QComboBox, QPushButton
+from PyQt5.QtCore import Qt
 
 def init():
     global strings

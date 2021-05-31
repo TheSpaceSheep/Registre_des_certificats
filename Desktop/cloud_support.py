@@ -1,8 +1,7 @@
 # coding: utf-8
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
+# from PyQt5.QtGui import *
+from PyQt5.QtWidgets import QInputDialog, QLineEdit
+# from PyQt5.QtCore import *
 import requests
 import json
 import language_selector as ls

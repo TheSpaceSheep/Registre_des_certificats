@@ -1,8 +1,7 @@
 # coding: utf-8
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
+from PyQt5.QtGui import QFont
+from PyQt5.QtWidgets import QComboBox, QLineEdit, QPushButton, QLabel, QListWidget, QCompleter, QSizePolicy, QMessageBox
+from PyQt5.QtCore import QSize
 import language_selector as ls
 
 # Contains :

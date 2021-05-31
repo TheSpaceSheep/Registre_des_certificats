@@ -1,8 +1,7 @@
 # coding: utf-8
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
+from PyQt5.QtGui import QFont
+from PyQt5.QtWidgets import QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QCommandLinkButton, QSizePolicy
+from PyQt5.QtCore import Qt, QItemSelectionModel, QThread
 from widgets import *
 from new_school_window import NewSchoolWindow
 import cloud_support

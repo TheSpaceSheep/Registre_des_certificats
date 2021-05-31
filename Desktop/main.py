@@ -1,9 +1,9 @@
 # coding: utf-8
 import os
 import time
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
+from PyQt5.QtGui import QFont
+from PyQt5.QtWidgets import QMainWindow, QApplication, QVBoxLayout, QHBoxLayout, QWidget, QCompleter
+from PyQt5.QtCore import QThread, Qt
 
 from registre_manager import Registre
 import excel
